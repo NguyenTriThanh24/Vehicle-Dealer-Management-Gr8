@@ -10,37 +10,24 @@ namespace Vehicle_Dealer_Management.DAL.Models
 
         [Required]
         [StringLength(100)]
-        public string Make { get; set; } = string.Empty; // Hãng xe (Toyota, Honda, etc.)
+        public string ModelName { get; set; } = string.Empty; // Tên mẫu xe (ví dụ: "Model S", "Model 3")
 
         [Required]
         [StringLength(100)]
-        public string Model { get; set; } = string.Empty; // Model xe
+        public string VariantName { get; set; } = string.Empty; // Phiên bản (ví dụ: "Standard", "Premium", "Performance")
+
+        [Column(TypeName = "nvarchar(max)")]
+        public string? SpecJson { get; set; } // JSON chứa thông số kỹ thuật
 
         [Required]
-        public int Year { get; set; } // Năm sản xuất
-
-        [StringLength(50)]
-        public string? Color { get; set; } // Màu sắc
-
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; } // Giá bán
-
-        [StringLength(17)]
-        public string? VinNumber { get; set; } // Số khung xe
-
-        [StringLength(20)]
-        public string? LicensePlate { get; set; } // Biển số xe
-
-        [StringLength(50)]
-        public string? EngineNumber { get; set; } // Số máy
-
         [StringLength(500)]
-        public string? Description { get; set; } // Mô tả
+        public string ImageUrl { get; set; } = string.Empty; // URL ảnh xe
 
-        public bool IsAvailable { get; set; } = true; // Trạng thái có sẵn để bán
+        [Required]
+        [StringLength(20)]
+        public string Status { get; set; } = "AVAILABLE"; // AVAILABLE, DISCONTINUED, COMING_SOON
 
-        public DateTime CreatedDate { get; set; } = DateTime.Now;
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         public DateTime? UpdatedDate { get; set; }
 

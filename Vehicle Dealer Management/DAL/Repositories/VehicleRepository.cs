@@ -13,17 +13,15 @@ namespace Vehicle_Dealer_Management.DAL.Repositories
         public async Task<IEnumerable<Vehicle>> GetAvailableVehiclesAsync()
         {
             return await _dbSet
-                .Where(v => v.IsAvailable == true)
+                .Where(v => v.Status == "AVAILABLE")
                 .ToListAsync();
         }
 
         public async Task<IEnumerable<Vehicle>> SearchVehiclesAsync(string searchTerm)
         {
             return await _dbSet
-                .Where(v => v.Make.Contains(searchTerm) ||
-                           v.Model.Contains(searchTerm) ||
-                           (v.VinNumber != null && v.VinNumber.Contains(searchTerm)) ||
-                           (v.LicensePlate != null && v.LicensePlate.Contains(searchTerm)))
+                .Where(v => v.ModelName.Contains(searchTerm) ||
+                           v.VariantName.Contains(searchTerm))
                 .ToListAsync();
         }
 

@@ -20,13 +20,21 @@ namespace Vehicle_Dealer_Management.DAL.Models
         [StringLength(100)]
         public string? Email { get; set; }
 
+        [Required]
+        [StringLength(50)]
+        public string Code { get; set; } = string.Empty; // Mã đại lý (UNIQUE)
+
         [StringLength(50)]
         public string? TaxCode { get; set; } // Mã số thuế
 
         [StringLength(500)]
         public string? Description { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        [Required]
+        [StringLength(20)]
+        public string Status { get; set; } = "ACTIVE"; // ACTIVE, INACTIVE, SUSPENDED
+
+        public bool IsActive { get; set; } = true; // Giữ lại để tương thích
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 

@@ -45,28 +45,26 @@ namespace Vehicle_Dealer_Management.BLL.Services
             }
 
             // Business logic: Validate vehicle data
-            if (string.IsNullOrWhiteSpace(vehicle.Make))
+            if (string.IsNullOrWhiteSpace(vehicle.ModelName))
             {
-                throw new ArgumentException("Vehicle make is required", nameof(vehicle));
+                throw new ArgumentException("Vehicle model name is required", nameof(vehicle));
             }
 
-            if (string.IsNullOrWhiteSpace(vehicle.Model))
+            if (string.IsNullOrWhiteSpace(vehicle.VariantName))
             {
-                throw new ArgumentException("Vehicle model is required", nameof(vehicle));
+                throw new ArgumentException("Vehicle variant name is required", nameof(vehicle));
             }
 
-            if (vehicle.Year < 1900 || vehicle.Year > DateTime.Now.Year + 1)
+            if (string.IsNullOrWhiteSpace(vehicle.ImageUrl))
             {
-                throw new ArgumentException("Invalid year", nameof(vehicle));
+                throw new ArgumentException("Vehicle image URL is required", nameof(vehicle));
             }
 
-            if (vehicle.Price <= 0)
+            vehicle.CreatedDate = DateTime.UtcNow;
+            if (string.IsNullOrWhiteSpace(vehicle.Status))
             {
-                throw new ArgumentException("Price must be greater than 0", nameof(vehicle));
+                vehicle.Status = "AVAILABLE";
             }
-
-            vehicle.CreatedDate = DateTime.Now;
-            vehicle.IsAvailable = true;
 
             return await _vehicleRepository.AddAsync(vehicle);
         }
@@ -83,7 +81,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 throw new KeyNotFoundException($"Vehicle with ID {vehicle.Id} not found");
             }
 
-            vehicle.UpdatedDate = DateTime.Now;
+            vehicle.UpdatedDate = DateTime.UtcNow;
 
             await _vehicleRepository.UpdateAsync(vehicle);
         }

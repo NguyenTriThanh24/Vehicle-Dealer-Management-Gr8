@@ -1,50 +1,233 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var userRole = ViewData["UserRole"]?.ToString() ?? "CUSTOMER";
+    var userName = ViewData["UserName"]?.ToString() ?? "Guest User";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Vehicle_Dealer_Management</title>
+    <title>@ViewData["Title"] - EVM Dealer Portal</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/Vehicle_Dealer_Management.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dark-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">Vehicle_Dealer_Management</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-brand">
+                    <i class="bi bi-lightning-charge"></i>
+                    EVM Portal
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - Vehicle_Dealer_Management - <a asp-area="" asp-page="/Privacy">Privacy</a>
+            
+            <nav class="sidebar-nav">
+                @if (userRole == "CUSTOMER")
+                {
+                    <div class="nav-section">
+                        <a class="nav-item" asp-page="/Customer/Dashboard">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                        <a class="nav-item" asp-page="/Customer/Vehicles">
+                            <i class="bi bi-car-front"></i> Xe điện
+                        </a>
+                        <a class="nav-item" asp-page="/Customer/MyQuotes">
+                            <i class="bi bi-file-text"></i> Báo giá của tôi
+                        </a>
+                        <a class="nav-item" asp-page="/Customer/MyOrders">
+                            <i class="bi bi-receipt"></i> Đơn hàng của tôi
+                        </a>
+                        <a class="nav-item" asp-page="/Customer/TestDrive">
+                            <i class="bi bi-calendar-check"></i> Lịch lái thử
+                        </a>
+                    </div>
+                }
+                else if (userRole == "DEALER_STAFF")
+                {
+                    <div class="nav-section">
+                        <div class="nav-section-title">Main</div>
+                        <a class="nav-item" asp-page="/Dealer/Dashboard">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                        <a class="nav-item" asp-page="/Dealer/Vehicles">
+                            <i class="bi bi-car-front"></i> Danh mục xe
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Bán hàng</div>
+                        <a class="nav-item" asp-page="/Dealer/Sales/Quotes">
+                            <i class="bi bi-file-text"></i> Báo giá
+                        </a>
+                        <a class="nav-item" asp-page="/Dealer/Sales/Orders">
+                            <i class="bi bi-receipt"></i> Đơn hàng
+                        </a>
+                        <a class="nav-item" asp-page="/Dealer/Sales/CreateQuote">
+                            <i class="bi bi-plus-circle"></i> Tạo báo giá mới
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Khách hàng</div>
+                        <a class="nav-item" asp-page="/Dealer/Customers">
+                            <i class="bi bi-people"></i> Danh sách khách
+                        </a>
+                        <a class="nav-item" asp-page="/Dealer/TestDrives">
+                            <i class="bi bi-calendar-check"></i> Lịch lái thử
+                        </a>
+                        <a class="nav-item" asp-page="/Dealer/Feedback">
+                            <i class="bi bi-chat-dots"></i> Phản hồi
+                        </a>
+                    </div>
+                }
+                else if (userRole == "DEALER_MANAGER")
+                {
+                    <div class="nav-section">
+                        <div class="nav-section-title">Main</div>
+                        <a class="nav-item" asp-page="/DealerManager/Dashboard">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Báo cáo</div>
+                        <a class="nav-item" asp-page="/DealerManager/Reports/SalesByStaff">
+                            <i class="bi bi-bar-chart"></i> Doanh số nhân viên
+                        </a>
+                        <a class="nav-item" asp-page="/DealerManager/Reports/Debts">
+                            <i class="bi bi-cash-stack"></i> Công nợ
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Quản lý</div>
+                        <a class="nav-item" asp-page="/Dealer/Customers">
+                            <i class="bi bi-people"></i> Khách hàng
+                        </a>
+                        <a class="nav-item" asp-page="/Dealer/Sales/Orders">
+                            <i class="bi bi-receipt"></i> Đơn hàng
+                        </a>
+                    </div>
+                }
+                else if (userRole == "EVM_STAFF")
+                {
+                    <div class="nav-section">
+                        <div class="nav-section-title">Main</div>
+                        <a class="nav-item" asp-page="/EVM/Dashboard">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Sản phẩm</div>
+                        <a class="nav-item" asp-page="/EVM/Vehicles/Index">
+                            <i class="bi bi-car-front"></i> Quản lý xe
+                        </a>
+                        <a class="nav-item" asp-page="/EVM/PricePolicies">
+                            <i class="bi bi-tag"></i> Chính sách giá
+                        </a>
+                        <a class="nav-item" asp-page="/EVM/Stocks">
+                            <i class="bi bi-box-seam"></i> Tồn kho
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Đại lý</div>
+                        <a class="nav-item" asp-page="/EVM/Dealers">
+                            <i class="bi bi-shop"></i> Quản lý đại lý
+                        </a>
+                        <a class="nav-item" asp-page="/EVM/DealerOrders">
+                            <i class="bi bi-truck"></i> Đơn đặt hàng
+                        </a>
+                    </div>
+                }
+                else if (userRole == "EVM_ADMIN")
+                {
+                    <div class="nav-section">
+                        <div class="nav-section-title">Main</div>
+                        <a class="nav-item" asp-page="/Admin/Dashboard">
+                            <i class="bi bi-house"></i> Dashboard
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Báo cáo</div>
+                        <a class="nav-item" asp-page="/Admin/Reports/SalesByDealer">
+                            <i class="bi bi-bar-chart"></i> Doanh số đại lý
+                        </a>
+                        <a class="nav-item" asp-page="/Admin/Reports/SalesByVehicle">
+                            <i class="bi bi-graph-up"></i> Doanh số theo xe
+                        </a>
+                        <a class="nav-item" asp-page="/Admin/Reports/Inventory">
+                            <i class="bi bi-box-seam"></i> Phân tích tồn kho
+                        </a>
+                        <a class="nav-item" asp-page="/Admin/Reports/Consumption">
+                            <i class="bi bi-speedometer2"></i> Tốc độ tiêu thụ
+                        </a>
+                    </div>
+                    <div class="nav-section">
+                        <div class="nav-section-title">Hệ thống</div>
+                        <a class="nav-item" asp-page="/Admin/Users">
+                            <i class="bi bi-people"></i> Người dùng
+                        </a>
+                        <a class="nav-item" asp-page="/EVM/Dealers">
+                            <i class="bi bi-shop"></i> Đại lý
+                        </a>
+                    </div>
+                }
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a class="nav-item" asp-page="/Profile">
+                    <i class="bi bi-person"></i> Tài khoản
+                </a>
+                <a class="nav-item" asp-page="/Logout">
+                    <i class="bi bi-box-arrow-right"></i> Đăng xuất
+                </a>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="btn btn-secondary btn-sm d-md-none" id="sidebarToggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">@ViewData["Title"]</h5>
+                </div>
+                <div class="header-right">
+                    <div class="user-menu">
+                        <div class="user-avatar">
+                            @userName.Substring(0, 1).ToUpper()
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">@userName</div>
+                            <div class="user-role">@userRole.Replace("_", " ")</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Content -->
+            <main class="content">
+                @RenderBody()
+            </main>
         </div>
-    </footer>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Sidebar toggle for mobile
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+        
+        // Set active nav item
+        const currentPath = window.location.pathname;
+        document.querySelectorAll('.nav-item').forEach(item => {
+            if (item.getAttribute('href') === currentPath) {
+                item.classList.add('active');
+            }
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

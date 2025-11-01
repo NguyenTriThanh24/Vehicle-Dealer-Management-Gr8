@@ -58,7 +58,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 throw new KeyNotFoundException($"Vehicle with ID {sale.VehicleId} not found");
             }
 
-            if (!vehicle.IsAvailable)
+            if (vehicle.Status != "AVAILABLE")
             {
                 throw new InvalidOperationException("Vehicle is not available for sale");
             }
@@ -74,9 +74,11 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 throw new ArgumentException("Sale price must be greater than 0", nameof(sale));
             }
 
-            // Business logic: Mark vehicle as unavailable after sale
-            vehicle.IsAvailable = false;
-            vehicle.UpdatedDate = DateTime.Now;
+            // Business logic: Mark vehicle as unavailable after sale (if needed)
+            // Note: Vehicle status should be managed through stock system, not directly here
+            // Keeping this for backward compatibility, but consider using stock management instead
+            vehicle.Status = "DISCONTINUED"; // Or keep as AVAILABLE and manage through Stock
+            vehicle.UpdatedDate = DateTime.UtcNow;
             await _vehicleRepository.UpdateAsync(vehicle);
 
             sale.SaleDate = DateTime.Now;
@@ -112,8 +114,8 @@ namespace Vehicle_Dealer_Management.BLL.Services
             var vehicle = await _vehicleRepository.GetByIdAsync(sale.VehicleId);
             if (vehicle != null)
             {
-                vehicle.IsAvailable = true;
-                vehicle.UpdatedDate = DateTime.Now;
+                vehicle.Status = "AVAILABLE";
+                vehicle.UpdatedDate = DateTime.UtcNow;
                 await _vehicleRepository.UpdateAsync(vehicle);
             }
 
