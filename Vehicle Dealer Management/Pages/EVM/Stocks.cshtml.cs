@@ -113,6 +113,42 @@ namespace Vehicle_Dealer_Management.Pages.EVM
 
             await _context.SaveChangesAsync();
 
+            TempData["Success"] = "Nhập kho thành công!";
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostUpdateStockAsync(int stockId, int newQuantity)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            // Validate quantity
+            if (newQuantity < 0)
+            {
+                TempData["Error"] = "Số lượng không được âm.";
+                return RedirectToPage();
+            }
+
+            // Get stock
+            var stock = await _context.Stocks
+                .FirstOrDefaultAsync(s => s.Id == stockId && s.OwnerType == "EVM");
+
+            if (stock == null)
+            {
+                TempData["Error"] = "Không tìm thấy tồn kho này.";
+                return RedirectToPage();
+            }
+
+            // Update quantity
+            stock.Qty = newQuantity;
+            stock.CreatedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Cập nhật số lượng tồn kho thành công!";
             return RedirectToPage();
         }
 

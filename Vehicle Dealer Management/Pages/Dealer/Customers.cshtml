@@ -42,20 +42,32 @@
 <!-- Search -->
 <div class="card mb-4">
     <div class="card-body">
-        <div class="grid grid-cols-4 gap-2">
-            <div style="grid-column: span 2;">
-                <input type="text" class="form-control" placeholder="Tìm theo tên, email, số điện thoại..." />
+        <form method="get">
+            <div class="grid grid-cols-4 gap-2">
+                <div style="grid-column: span 2;">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Tìm theo tên, email, số điện thoại..." 
+                           value="@Model.SearchQuery" />
+                </div>
+                <select name="filter" class="form-control">
+                    <option value="">Tất cả</option>
+                    <option value="hasAccount" @(Model.FilterType == "hasAccount" ? "selected" : "")>Có tài khoản</option>
+                    <option value="withPurchase" @(Model.FilterType == "withPurchase" ? "selected" : "")>Đã mua xe</option>
+                    <option value="noPurchase" @(Model.FilterType == "noPurchase" ? "selected" : "")>Chưa mua xe</option>
+                </select>
+                <div class="flex gap-1">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+                    @if (!string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.FilterType))
+                    {
+                        <a href="/Dealer/Customers" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Xóa
+                        </a>
+                    }
+                </div>
             </div>
-            <select class="form-control">
-                <option>Tất cả</option>
-                <option>Có tài khoản</option>
-                <option>Đã mua xe</option>
-                <option>Chưa mua xe</option>
-            </select>
-            <button class="btn btn-primary">
-                <i class="bi bi-search"></i> Tìm kiếm
-            </button>
-        </div>
+        </form>
     </div>
 </div>
 
@@ -121,9 +133,11 @@
                                 }
                             </td>
                             <td>
-                                <button class="btn btn-secondary btn-sm">
-                                    <i class="bi bi-eye"></i> Chi tiết
-                                </button>
+                                <div class="flex gap-1">
+                                    <button class="btn btn-secondary btn-sm" onclick="editCustomer(@customer.Id, '@Html.Raw(customer.FullName.Replace("'", "\\'"))', '@Html.Raw(customer.Phone.Replace("'", "\\'"))', '@Html.Raw(customer.Email.Replace("'", "\\'"))', '@Html.Raw((customer.Address ?? "").Replace("'", "\\'"))')">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -173,4 +187,78 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Customer Modal -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Chỉnh sửa khách hàng</h3>
+        </div>
+        <div class="card-body">
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
+                    <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+                </div>
+            }
+            <form method="post" asp-page-handler="UpdateCustomer">
+                <input type="hidden" id="editCustomerId" name="customerId" />
+                <div class="form-group">
+                    <label class="form-label">Họ và tên</label>
+                    <input type="text" class="form-control" id="editFullName" name="fullName" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="tel" class="form-control" id="editPhone" name="phone" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="editEmail" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Địa chỉ</label>
+                    <textarea class="form-control" id="editAddress" name="address" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số CMND/CCCD (Tùy chọn)</label>
+                    <input type="text" class="form-control" id="editIdentityNo" name="identityNo" />
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check"></i> Cập nhật
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <i class="bi bi-check-circle"></i> @TempData["Success"]
+    </div>
+    <script>
+        setTimeout(function() {
+            var toast = document.getElementById('successToast');
+            if (toast) toast.style.display = 'none';
+        }, 3000);
+    </script>
+}
+
+@section Scripts {
+    <script>
+        function editCustomer(id, fullName, phone, email, address) {
+            document.getElementById('editCustomerId').value = id;
+            document.getElementById('editFullName').value = fullName || '';
+            document.getElementById('editPhone').value = phone || '';
+            document.getElementById('editEmail').value = email || '';
+            document.getElementById('editAddress').value = address || '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+    </script>
+}
 

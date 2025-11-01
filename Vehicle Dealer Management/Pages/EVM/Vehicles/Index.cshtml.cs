@@ -47,6 +47,40 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
             return Page();
         }
 
+        public async Task<IActionResult> OnPostDeleteAsync(int vehicleId)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            var vehicle = await _context.Vehicles.FindAsync(vehicleId);
+            if (vehicle == null)
+            {
+                TempData["Error"] = "Không tìm thấy xe này.";
+                return RedirectToPage();
+            }
+
+            // Check if vehicle is used in any orders/quotes
+            var hasOrders = await _context.SalesDocumentLines
+                .AnyAsync(l => l.VehicleId == vehicleId);
+            
+            if (hasOrders)
+            {
+                TempData["Error"] = "Không thể xóa xe này vì đã có đơn hàng/báo giá sử dụng. Hãy đổi trạng thái thành DISCONTINUED thay vì xóa.";
+                return RedirectToPage();
+            }
+
+            // Soft delete: Set status to DISCONTINUED instead of hard delete
+            vehicle.Status = "DISCONTINUED";
+            vehicle.UpdatedDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đã đổi trạng thái xe thành DISCONTINUED thành công!";
+            return RedirectToPage();
+        }
+
         public class VehicleViewModel
         {
             public int Id { get; set; }

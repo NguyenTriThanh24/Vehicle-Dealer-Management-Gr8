@@ -79,6 +79,98 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             return Page();
         }
 
+        public async Task<IActionResult> OnPostAsync(int dealerId, int vehicleId, string date, string time, string? note)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            var user = await _context.Users.FindAsync(int.Parse(userId));
+            if (user == null)
+            {
+                return RedirectToPage("/Login");
+            }
+
+            // Get or create customer profile
+            var customerProfile = await _context.CustomerProfiles
+                .FirstOrDefaultAsync(c => c.UserId == user.Id);
+
+            if (customerProfile == null)
+            {
+                TempData["Error"] = "Không tìm thấy thông tin khách hàng. Vui lòng cập nhật thông tin cá nhân.";
+                return RedirectToPage();
+            }
+
+            // Validate inputs
+            if (dealerId <= 0 || vehicleId <= 0 || string.IsNullOrEmpty(date) || string.IsNullOrEmpty(time))
+            {
+                TempData["Error"] = "Vui lòng điền đầy đủ thông tin.";
+                return RedirectToPage();
+            }
+
+            // Parse date and time
+            if (!DateTime.TryParse(date, out var scheduleDate))
+            {
+                TempData["Error"] = "Ngày không hợp lệ.";
+                return RedirectToPage();
+            }
+
+            if (!TimeSpan.TryParse(time, out var scheduleTime))
+            {
+                TempData["Error"] = "Giờ không hợp lệ.";
+                return RedirectToPage();
+            }
+
+            var scheduleDateTime = scheduleDate.Date.Add(scheduleTime);
+
+            // Validate schedule time is in the future
+            if (scheduleDateTime < DateTime.Now)
+            {
+                TempData["Error"] = "Thời gian đặt lịch phải trong tương lai.";
+                return RedirectToPage();
+            }
+
+            // Validate dealer exists and is active
+            var dealer = await _context.Dealers
+                .FirstOrDefaultAsync(d => d.Id == dealerId && d.Status == "ACTIVE");
+
+            if (dealer == null)
+            {
+                TempData["Error"] = "Đại lý không tồn tại hoặc không hoạt động.";
+                return RedirectToPage();
+            }
+
+            // Validate vehicle exists and is available
+            var vehicle = await _context.Vehicles
+                .FirstOrDefaultAsync(v => v.Id == vehicleId && v.Status == "AVAILABLE");
+
+            if (vehicle == null)
+            {
+                TempData["Error"] = "Mẫu xe không tồn tại hoặc không có sẵn.";
+                return RedirectToPage();
+            }
+
+            // Create test drive
+            var testDrive = new Vehicle_Dealer_Management.DAL.Models.TestDrive
+            {
+                CustomerId = customerProfile.Id,
+                DealerId = dealerId,
+                VehicleId = vehicleId,
+                ScheduleTime = scheduleDateTime,
+                Status = "REQUESTED",
+                Note = note,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.TestDrives.Add(testDrive);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Đặt lịch lái thử thành công! Đại lý sẽ xác nhận và liên hệ với bạn.";
+            return RedirectToPage();
+        }
+
         public class TestDriveViewModel
         {
             public int Id { get; set; }

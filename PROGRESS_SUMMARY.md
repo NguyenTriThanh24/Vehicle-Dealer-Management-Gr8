@@ -85,10 +85,18 @@
 - ✅ Mark delivered functionality (với handover note)
 - ✅ Auto update order status to DELIVERED
 
-### ✅ **Vừa hoàn thành (Latest)**
-- ✅ Convert Quote to Order: Functional với POST handler, copy lines, redirect
-- ✅ Vehicle Detail pages: Dealer (MSRP + Wholesale, EVM stock, button "Tạo báo giá") & Customer (MSRP, dealers list, buttons "Yêu cầu báo giá" + "Đặt lịch lái thử")
-- ✅ Specs parsing từ JSON và hiển thị trong table
+### ✅ **Vừa hoàn thành (Latest - Priority 1 Features)**
+- ✅ Edit Quote functionality: EditQuote page với validation DRAFT/SENT status, pre-fill data
+- ✅ Test Drive Booking POST handler: Functional booking với full validation (dealer, vehicle, date/time)
+- ✅ Stock Edit functionality: Modal form và POST handler để update Stock.Qty với validation qty >= 0
+- ✅ Customer Create/Edit form: Modal form với validation phone/email unique, success/error notifications
+- ✅ Vehicle Edit: Edit page cho EVM Staff với SpecJson parsing, validation ModelName+VariantName unique
+
+### ✅ **Vừa hoàn thành (Nhóm A - Core Features)**
+- ✅ Customer Search/Filter: Functional search theo tên/email/phone, filter theo hasAccount/withPurchase/noPurchase
+- ✅ Price Policy Edit/Delete: Edit modal với date range, Delete với confirmation
+- ✅ Vehicle Delete: Delete button với soft delete (DISCONTINUED), validation nếu có orders/quotes
+- ✅ Dealer Detail Page: `/EVM/Dealers/Detail` hiển thị thông tin đại lý, orders history, debts, stock summary
 
 ### ⚠️ **Còn thiếu (Nice to have)**
 

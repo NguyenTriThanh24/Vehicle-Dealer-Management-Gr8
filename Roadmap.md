@@ -29,11 +29,23 @@
 - [x] Convert Quote to Order: Functional POST handler, copy all lines, redirect to OrderDetail
 - [x] Vehicle Detail Pages: Dealer & Customer - Specs, pricing, stock, actions buttons
 
+### ✅ Vừa hoàn thành (Priority 1 Features - Latest)
+- [x] Edit Quote functionality: EditQuote page với validation DRAFT/SENT status
+- [x] Test Drive Booking POST handler: Functional booking với validation
+- [x] Stock Edit functionality: Modal form và POST handler để update Stock.Qty
+- [x] Customer Create/Edit form: Modal form với validation phone/email unique
+- [x] Vehicle Edit: Edit page cho EVM Staff với SpecJson parsing
+
+### ✅ Vừa hoàn thành (Nhóm A - Core Features)
+- [x] Customer Search/Filter: Functional search và filter trong Customers page
+- [x] Price Policy Edit/Delete: Edit modal và Delete functionality với confirmation
+- [x] Vehicle Delete: Delete button với soft delete (DISCONTINUED) và validation
+- [x] Dealer Detail Page: Detail page hiển thị thông tin, orders, debts, stock summary
+
 ### ❌ Chưa có (Optional - UI-First)
 - [ ] Create Order page (hiện có Convert Quote to Order, có thể không cần separate page)
 - [ ] Vehicle Comparison feature (nice to have)
 - [ ] Promotion management UI (apply promotions to quotes/orders) - Form hiện đã có dropdown
-- [ ] Edit Quote functionality (link đã có nhưng chưa implement)
 
 ---
 

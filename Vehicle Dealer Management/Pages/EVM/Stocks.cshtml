@@ -18,6 +18,19 @@
     </div>
 </div>
 
+@if (TempData["Success"] != null)
+{
+    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <i class="bi bi-check-circle"></i> @TempData["Success"]
+    </div>
+    <script>
+        setTimeout(function() {
+            var toast = document.getElementById('successToast');
+            if (toast) toast.style.display = 'none';
+        }, 3000);
+    </script>
+}
+
 <!-- Summary Cards -->
 <div class="grid grid-cols-4 mb-4">
     <div class="stat-card">
@@ -168,14 +181,47 @@
     </div>
 </div>
 
+<!-- Edit Stock Modal -->
+<div id="editStockModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 500px; width: 90%;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Cập nhật số lượng tồn kho</h3>
+        </div>
+        <div class="card-body">
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
+                    <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+                </div>
+            }
+            <form method="post" asp-page-handler="UpdateStock">
+                <input type="hidden" id="editStockId" name="stockId" />
+                <div class="form-group">
+                    <label class="form-label">Số lượng hiện tại</label>
+                    <input type="number" class="form-control" id="currentQtyDisplay" readonly style="background: var(--black); cursor: not-allowed;" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số lượng mới *</label>
+                    <input type="number" class="form-control" id="newQtyInput" name="newQuantity" required min="0" />
+                    <small class="form-text">Nhập số lượng tồn kho mới (≥ 0)</small>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editStockModal').style.display='none'">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         function editStock(id, currentQty) {
-            const newQty = prompt('Nhập số lượng mới:', currentQty);
-            if (newQty && !isNaN(newQty) && parseInt(newQty) >= 0) {
-                // Submit form to update
-                alert('Cập nhật thành công (chức năng đang phát triển)');
-            }
+            document.getElementById('editStockId').value = id;
+            document.getElementById('currentQtyDisplay').value = currentQty;
+            document.getElementById('newQtyInput').value = currentQty;
+            document.getElementById('editStockModal').style.display = 'flex';
+            document.getElementById('newQtyInput').focus();
         }
     </script>
 }

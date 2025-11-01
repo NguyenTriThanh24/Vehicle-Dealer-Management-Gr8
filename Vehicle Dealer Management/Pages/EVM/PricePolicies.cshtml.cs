@@ -84,6 +84,69 @@ namespace Vehicle_Dealer_Management.Pages.EVM
             _context.PricePolicies.Add(pricePolicy);
             await _context.SaveChangesAsync();
 
+            TempData["Success"] = "Tạo chính sách giá thành công!";
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostUpdatePolicyAsync(int policyId, decimal msrp, decimal wholesalePrice, string validFrom, string? validTo)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            var policy = await _context.PricePolicies.FindAsync(policyId);
+            if (policy == null)
+            {
+                TempData["Error"] = "Không tìm thấy chính sách giá này.";
+                return RedirectToPage();
+            }
+
+            // Parse dates
+            if (!DateTime.TryParse(validFrom, out var validFromDate))
+            {
+                TempData["Error"] = "Ngày bắt đầu không hợp lệ.";
+                return RedirectToPage();
+            }
+
+            DateTime? validToDate = null;
+            if (!string.IsNullOrWhiteSpace(validTo) && DateTime.TryParse(validTo, out var parsedDate))
+            {
+                validToDate = parsedDate;
+            }
+
+            // Update policy
+            policy.Msrp = msrp;
+            policy.WholesalePrice = wholesalePrice;
+            policy.ValidFrom = validFromDate;
+            policy.ValidTo = validToDate;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Cập nhật chính sách giá thành công!";
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostDeletePolicyAsync(int policyId)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Login");
+            }
+
+            var policy = await _context.PricePolicies.FindAsync(policyId);
+            if (policy == null)
+            {
+                TempData["Error"] = "Không tìm thấy chính sách giá này.";
+                return RedirectToPage();
+            }
+
+            _context.PricePolicies.Remove(policy);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Xóa chính sách giá thành công!";
             return RedirectToPage();
         }
 

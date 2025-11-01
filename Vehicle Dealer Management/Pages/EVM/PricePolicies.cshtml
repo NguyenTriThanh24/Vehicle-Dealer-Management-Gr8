@@ -103,9 +103,14 @@
                                 }
                             </td>
                             <td>
-                                <button class="btn btn-secondary btn-sm">
-                                    <i class="bi bi-pencil"></i> Sửa
-                                </button>
+                                <div class="flex gap-1">
+                                    <button class="btn btn-secondary btn-sm" onclick="editPolicy(@policy.Id, '@policy.VehicleName', @policy.Msrp, @policy.WholesalePrice, '@(policy.ValidFrom.ToString("yyyy-MM-dd"))', '@(policy.ValidTo?.ToString("yyyy-MM-dd") ?? "")')">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="deletePolicy(@policy.Id, '@policy.VehicleName')">
+                                        <i class="bi bi-trash"></i> Xóa
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -149,4 +154,93 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Modal -->
+<div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; margin: 2rem;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Chỉnh sửa chính sách giá</h3>
+        </div>
+        <div class="card-body">
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
+                    <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+                </div>
+            }
+            <form method="post" asp-page-handler="UpdatePolicy">
+                <input type="hidden" id="editPolicyId" name="policyId" />
+                <div class="form-group">
+                    <label class="form-label">Mẫu xe</label>
+                    <input type="text" class="form-control" id="editVehicleName" readonly style="background: var(--black); cursor: not-allowed;" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giá bán lẻ (MSRP)</label>
+                    <input type="number" class="form-control" id="editMsrp" name="msrp" required step="1000000" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giá sỉ</label>
+                    <input type="number" class="form-control" id="editWholesalePrice" name="wholesalePrice" required step="1000000" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hiệu lực từ</label>
+                    <input type="date" class="form-control" id="editValidFrom" name="validFrom" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Đến (tùy chọn)</label>
+                    <input type="date" class="form-control" id="editValidTo" name="validTo" />
+                    <small class="form-text">Để trống nếu không có ngày hết hạn</small>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal').style.display='none'">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <i class="bi bi-check-circle"></i> @TempData["Success"]
+    </div>
+    <script>
+        setTimeout(function() {
+            var toast = document.getElementById('successToast');
+            if (toast) toast.style.display = 'none';
+        }, 3000);
+    </script>
+}
+
+@section Scripts {
+    <script>
+        function editPolicy(id, vehicleName, msrp, wholesalePrice, validFrom, validTo) {
+            document.getElementById('editPolicyId').value = id;
+            document.getElementById('editVehicleName').value = vehicleName;
+            document.getElementById('editMsrp').value = msrp;
+            document.getElementById('editWholesalePrice').value = wholesalePrice;
+            document.getElementById('editValidFrom').value = validFrom;
+            document.getElementById('editValidTo').value = validTo || '';
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function deletePolicy(id, vehicleName) {
+            if (confirm('Bạn có chắc chắn muốn xóa chính sách giá cho "' + vehicleName + '"? Hành động này không thể hoàn tác.')) {
+                var form = document.createElement('form');
+                form.method = 'post';
+                form.action = '?handler=DeletePolicy';
+                
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'policyId';
+                input.value = id;
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    </script>
+}
 
