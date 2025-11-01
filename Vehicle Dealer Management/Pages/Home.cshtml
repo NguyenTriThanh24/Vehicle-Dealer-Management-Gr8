@@ -1,0 +1,440 @@
+@page
+@model Vehicle_Dealer_Management.Pages.HomeModel
+@{
+    Layout = "_LayoutPublic";
+    ViewData["Title"] = "Home - EVM Dealer Portal";
+}
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, var(--black) 0%, var(--bg) 100%);
+        padding: 6rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="1" fill="rgba(155,234,251,0.1)"/></svg>') repeat;
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: var(--text-heading);
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.5rem;
+        color: var(--text-muted);
+        margin-bottom: 3rem;
+        line-height: 1.6;
+    }
+    
+    .hero-cta {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .cta-primary {
+        padding: 1rem 3rem;
+        font-size: 1.125rem;
+        background: var(--accent-cyan);
+        color: var(--black);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .cta-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(155, 234, 251, 0.3);
+    }
+    
+    .cta-secondary {
+        padding: 1rem 3rem;
+        font-size: 1.125rem;
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        font-weight: 600;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .cta-secondary:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .stats-section {
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 3rem 2rem;
+    }
+    
+    .stats-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        text-align: center;
+    }
+    
+    .stat-item {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--accent-cyan);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 1rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .features-section {
+        padding: 6rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-heading);
+        margin-bottom: 1rem;
+    }
+    
+    .section-subtitle {
+        text-align: center;
+        font-size: 1.125rem;
+        color: var(--text-muted);
+        margin-bottom: 4rem;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+    
+    .feature-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent-cyan);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        display: inline-block;
+    }
+    
+    .feature-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-heading);
+        margin-bottom: 1rem;
+    }
+    
+    .feature-description {
+        color: var(--text-muted);
+        line-height: 1.6;
+    }
+    
+    .cta-section {
+        background: linear-gradient(135deg, var(--black) 0%, #1a1a1c 100%);
+        padding: 6rem 2rem;
+        text-align: center;
+    }
+    
+    .cta-section-content {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.125rem;
+        }
+        
+        .hero-cta {
+            flex-direction: column;
+        }
+        
+        .cta-primary, .cta-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .grid.grid-cols-5 {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+    }
+    
+    @@media (max-width: 480px) {
+        .grid.grid-cols-5 {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <h1 class="hero-title">
+            <i class="bi bi-lightning-charge" style="color: var(--accent-cyan);"></i>
+            Hệ thống quản lý đại lý xe điện
+        </h1>
+        <p class="hero-subtitle">
+            Nền tảng toàn diện cho đại lý, hãng xe và khách hàng. 
+            Quản lý bán hàng, tồn kho và dịch vụ chuyên nghiệp.
+        </p>
+        <div class="hero-cta">
+            <a href="/Login" class="cta-primary">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Đăng nhập
+            </a>
+            <a href="/Register" class="cta-secondary">
+                <i class="bi bi-person-plus"></i>
+                Đăng ký ngay
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="stats-container">
+        <div class="stat-item">
+            <div class="stat-number">@Model.TotalVehicles+</div>
+            <div class="stat-label">Mẫu xe điện</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">@Model.TotalDealers+</div>
+            <div class="stat-label">Đại lý</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">@Model.TotalCustomers+</div>
+            <div class="stat-label">Khách hàng</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Thân thiện môi trường</div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <h2 class="section-title">Tính năng nổi bật</h2>
+    <p class="section-subtitle">Giải pháp toàn diện cho mọi nhu cầu quản lý</p>
+    
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon" style="color: var(--accent-cyan);">
+                <i class="bi bi-shop"></i>
+            </div>
+            <h3 class="feature-title">Quản lý đại lý</h3>
+            <p class="feature-description">
+                Hệ thống quản lý bán hàng, tồn kho, khách hàng và báo cáo doanh số chuyên nghiệp cho đại lý.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon" style="color: var(--success);">
+                <i class="bi bi-car-front"></i>
+            </div>
+            <h3 class="feature-title">Danh mục xe điện</h3>
+            <p class="feature-description">
+                Quản lý thông tin xe, giá bán, chính sách khuyến mãi và tồn kho theo thời gian thực.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon" style="color: var(--warning);">
+                <i class="bi bi-file-text"></i>
+            </div>
+            <h3 class="feature-title">Quản lý bán hàng</h3>
+            <p class="feature-description">
+                Tạo báo giá, đơn hàng, hợp đồng. Theo dõi thanh toán và lịch giao xe dễ dàng.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon" style="color: var(--info);">
+                <i class="bi bi-people"></i>
+            </div>
+            <h3 class="feature-title">Quản lý khách hàng</h3>
+            <p class="feature-description">
+                Lưu trữ thông tin khách hàng, lịch lái thử và xử lý phản hồi một cách hiệu quả.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon" style="color: var(--accent-cyan);">
+                <i class="bi bi-bar-chart"></i>
+            </div>
+            <h3 class="feature-title">Báo cáo & Phân tích</h3>
+            <p class="feature-description">
+                Dashboard trực quan với báo cáo doanh số, tồn kho và hiệu suất bán hàng chi tiết.
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon" style="color: var(--success);">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h3 class="feature-title">An toàn & Bảo mật</h3>
+            <p class="feature-description">
+                Phân quyền theo vai trò, bảo mật dữ liệu và tuân thủ các tiêu chuẩn bảo mật.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Test Accounts Section -->
+<section style="background: var(--surface); padding: 4rem 2rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+        <h2 class="section-title" style="margin-bottom: 1rem;">Dùng thử ngay</h2>
+        <p class="section-subtitle" style="margin-bottom: 3rem;">
+            Đăng nhập với các tài khoản demo để trải nghiệm hệ thống
+        </p>
+        
+        <div class="grid grid-cols-5" style="gap: 1.5rem;">
+            <a href="/Login?email=customer@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">👤</div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">Customer</h4>
+                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">customer@test.com</code>
+                <p class="text-muted" style="font-size: 0.75rem;">Khách hàng</p>
+            </a>
+
+            <a href="/Login?email=dealerstaff@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">💼</div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">Dealer Staff</h4>
+                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">dealerstaff@test.com</code>
+                <p class="text-muted" style="font-size: 0.75rem;">NV Đại lý</p>
+            </a>
+
+            <a href="/Login?email=dealermanager@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">👔</div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">Dealer Manager</h4>
+                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">dealermanager@test.com</code>
+                <p class="text-muted" style="font-size: 0.75rem;">QL Đại lý</p>
+            </a>
+
+            <a href="/Login?email=evmstaff@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏭</div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">EVM Staff</h4>
+                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">evmstaff@test.com</code>
+                <p class="text-muted" style="font-size: 0.75rem;">NV Hãng</p>
+            </a>
+
+            <a href="/Login?email=admin@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">👑</div>
+                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">EVM Admin</h4>
+                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">admin@test.com</code>
+                <p class="text-muted" style="font-size: 0.75rem;">Admin</p>
+            </a>
+        </div>
+
+        <div style="margin-top: 2rem; padding: 1rem; background: var(--black); border-radius: var(--radius-sm); display: inline-block;">
+            <p style="margin: 0;">
+                <i class="bi bi-key"></i> Password tất cả: <code style="color: var(--accent-cyan); font-size: 1.125rem; font-weight: 600;">123456</code>
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="cta-section-content">
+        <h2 class="section-title" style="margin-bottom: 1.5rem;">Sẵn sàng bắt đầu?</h2>
+        <p class="section-subtitle" style="margin-bottom: 2rem;">
+            Đăng ký ngay hôm nay để trải nghiệm hệ thống quản lý đại lý xe điện hiện đại nhất.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="/Register" class="cta-primary">
+                <i class="bi bi-person-plus"></i>
+                Đăng ký miễn phí
+            </a>
+            <a href="/Login" class="cta-secondary">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Đăng nhập
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer style="background: var(--black); padding: 3rem 2rem; border-top: 1px solid var(--border);">
+    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+        <div style="margin-bottom: 2rem;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-heading); margin-bottom: 1rem;">
+                <i class="bi bi-lightning-charge" style="color: var(--accent-cyan);"></i>
+                EVM Dealer Portal
+            </div>
+            <p class="text-muted">Hệ thống quản lý đại lý xe điện chuyên nghiệp</p>
+        </div>
+        
+        <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 2rem; flex-wrap: wrap;">
+            <a href="/Home" style="color: var(--text-muted); text-decoration: none;">Trang chủ</a>
+            <a href="/Customer/Vehicles" style="color: var(--text-muted); text-decoration: none;">Xe điện</a>
+            <a href="/Login" style="color: var(--text-muted); text-decoration: none;">Đăng nhập</a>
+            <a href="/Register" style="color: var(--text-muted); text-decoration: none;">Đăng ký</a>
+        </div>
+        
+        <div style="border-top: 1px solid var(--border); padding-top: 2rem; color: var(--text-muted); font-size: 0.875rem;">
+            <p>&copy; 2025 EVM Dealer Portal. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+

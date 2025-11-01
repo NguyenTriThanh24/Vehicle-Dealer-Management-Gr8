@@ -1,0 +1,152 @@
+@page
+@model Vehicle_Dealer_Management.Pages.EVM.PricePoliciesModel
+@{
+    ViewData["Title"] = "Quản lý chính sách giá";
+    ViewData["UserRole"] = "EVM_STAFF";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "EVM Staff";
+}
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Quản lý chính sách giá</h1>
+            <p class="content-subtitle">Thiết lập giá bán lẻ và giá sỉ cho từng mẫu xe</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='block'">
+            <i class="bi bi-plus-circle"></i> Tạo chính sách mới
+        </button>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="grid grid-cols-3 gap-2">
+            <div class="form-group mb-0">
+                <select class="form-control">
+                    <option>Tất cả mẫu xe</option>
+                    @foreach (var v in Model.AllVehicles)
+                    {
+                        <option>@v</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group mb-0">
+                <select class="form-control">
+                    <option>Tất cả đại lý</option>
+                    <option>Giá chung (Global)</option>
+                    @foreach (var d in Model.AllDealers)
+                    {
+                        <option>@d</option>
+                    }
+                </select>
+            </div>
+            <button class="btn btn-primary">
+                <i class="bi bi-search"></i> Lọc
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Price Policies Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Mẫu xe</th>
+                        <th>Áp dụng cho</th>
+                        <th>Giá bán lẻ (MSRP)</th>
+                        <th>Giá sỉ</th>
+                        <th>Hiệu lực từ</th>
+                        <th>Đến</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var policy in Model.PricePolicies)
+                    {
+                        var isActive = policy.ValidFrom <= DateTime.Now && (policy.ValidTo == null || policy.ValidTo >= DateTime.Now);
+                        
+                        <tr>
+                            <td>
+                                <strong>@policy.VehicleName</strong>
+                            </td>
+                            <td>
+                                @if (string.IsNullOrEmpty(policy.DealerName))
+                                {
+                                    <span class="badge badge-info">Giá chung (Global)</span>
+                                }
+                                else
+                                {
+                                    <span>@policy.DealerName</span>
+                                }
+                            </td>
+                            <td><strong style="color: var(--accent-cyan);">@policy.Msrp.ToString("N0") VND</strong></td>
+                            <td>@policy.WholesalePrice.ToString("N0") VND</td>
+                            <td>@policy.ValidFrom.ToString("dd/MM/yyyy")</td>
+                            <td>@(policy.ValidTo?.ToString("dd/MM/yyyy") ?? "Không giới hạn")</td>
+                            <td>
+                                @if (isActive)
+                                {
+                                    <span class="badge badge-success">Đang áp dụng</span>
+                                }
+                                else if (policy.ValidFrom > DateTime.Now)
+                                {
+                                    <span class="badge badge-warning">Chưa hiệu lực</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-default">Hết hạn</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-pencil"></i> Sửa
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal (Simple) -->
+<div id="createModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; margin: 2rem;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Tạo chính sách giá mới</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="form-group">
+                    <label class="form-label">Mẫu xe</label>
+                    <select class="form-control" name="vehicleId" required>
+                        <option value="">-- Chọn xe --</option>
+                        @foreach (var v in Model.Vehicles)
+                        {
+                            <option value="@v.Id">@v.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giá bán lẻ (MSRP)</label>
+                    <input type="number" class="form-control" name="msrp" required step="1000000" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giá sỉ</label>
+                    <input type="number" class="form-control" name="wholesalePrice" required step="1000000" />
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Tạo</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('createModal').style.display='none'">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

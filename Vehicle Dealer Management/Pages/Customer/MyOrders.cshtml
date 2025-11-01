@@ -1,0 +1,89 @@
+@page
+@model Vehicle_Dealer_Management.Pages.Customer.MyOrdersModel
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+    ViewData["UserRole"] = "CUSTOMER";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "Customer";
+}
+
+<div class="content-header">
+    <h1 class="content-title">Đơn hàng của tôi</h1>
+    <p class="content-subtitle">Theo dõi trạng thái đơn hàng và giao xe</p>
+</div>
+
+<!-- Orders List -->
+@if (Model.Orders.Any())
+{
+    @foreach (var order in Model.Orders)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">Đơn hàng #@order.Id</h4>
+                        <p class="text-muted" style="font-size: 0.875rem; margin: 0;">
+                            Ngày đặt: @order.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </p>
+                    </div>
+                    @await Html.PartialAsync("_StatusBadge", order.Status)
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mb-3" style="padding: 1rem; background: var(--black); border-radius: var(--radius-sm);">
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem;">Tổng tiền</div>
+                        <div style="font-weight: 700; font-size: 1.25rem; color: var(--accent-cyan);">
+                            @order.TotalAmount.ToString("N0") VND
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem;">Đã thanh toán</div>
+                        <div style="font-weight: 700; font-size: 1.25rem; color: var(--success);">
+                            @order.PaidAmount.ToString("N0") VND
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem;">Còn lại</div>
+                        <div style="font-weight: 700; font-size: 1.25rem; @(order.RemainingAmount > 0 ? "color: var(--error);" : "")">
+                            @order.RemainingAmount.ToString("N0") VND
+                        </div>
+                    </div>
+                </div>
+
+                @if (order.DeliveryDate.HasValue)
+                {
+                    <div style="padding: 1rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                        <div style="color: var(--success); font-weight: 600;">
+                            <i class="bi bi-truck"></i> Ngày giao xe dự kiến: @order.DeliveryDate.Value.ToString("dd/MM/yyyy")
+                        </div>
+                    </div>
+                }
+
+                <div class="flex gap-2">
+                    <a href="/Customer/OrderDetail?id=@order.Id" class="btn btn-primary btn-sm">
+                        <i class="bi bi-eye"></i> Xem chi tiết
+                    </a>
+                    @if (order.Status == "OPEN" && order.RemainingAmount > 0)
+                    {
+                        <button class="btn btn-success btn-sm">
+                            <i class="bi bi-credit-card"></i> Thanh toán
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <div class="empty-state-title">Chưa có đơn hàng</div>
+                <div class="empty-state-text">Khám phá các mẫu xe và đặt hàng ngay!</div>
+                <a href="/Customer/Vehicles" class="btn btn-primary mt-3">Xem xe điện</a>
+            </div>
+        </div>
+    </div>
+}
+

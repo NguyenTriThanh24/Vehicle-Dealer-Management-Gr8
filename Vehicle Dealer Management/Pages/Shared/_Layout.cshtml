@@ -17,18 +17,25 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-brand">
+                <a href="/Home" class="sidebar-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
                     <i class="bi bi-lightning-charge"></i>
                     EVM Portal
-                </div>
+                </a>
             </div>
             
             <nav class="sidebar-nav">
+                <!-- Home link for all users -->
+                <div class="nav-section">
+                    <a class="nav-item" href="/Home">
+                        <i class="bi bi-house-door"></i> Trang chủ
+                    </a>
+                </div>
+                
                 @if (userRole == "CUSTOMER")
                 {
                     <div class="nav-section">
                         <a class="nav-item" asp-page="/Customer/Dashboard">
-                            <i class="bi bi-house"></i> Dashboard
+                            <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                         <a class="nav-item" asp-page="/Customer/Vehicles">
                             <i class="bi bi-car-front"></i> Xe điện

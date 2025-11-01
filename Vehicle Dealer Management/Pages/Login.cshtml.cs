@@ -24,8 +24,13 @@ namespace Vehicle_Dealer_Management.Pages
 
         public string? ErrorMessage { get; set; }
 
-        public void OnGet()
+        public void OnGet(string? email)
         {
+            // Auto-fill email from query string (from Home page)
+            if (!string.IsNullOrEmpty(email))
+            {
+                Email = email;
+            }
         }
 
         public async Task<IActionResult> OnPostAsync()

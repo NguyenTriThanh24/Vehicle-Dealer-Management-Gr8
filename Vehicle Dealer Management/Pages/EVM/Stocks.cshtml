@@ -1,0 +1,197 @@
+@page
+@model Vehicle_Dealer_Management.Pages.EVM.StocksModel
+@{
+    ViewData["Title"] = "Quản lý tồn kho";
+    ViewData["UserRole"] = "EVM_STAFF";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "EVM Staff";
+}
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Quản lý tồn kho</h1>
+            <p class="content-subtitle">Quản lý tồn kho EVM và đại lý</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('addStockModal').style.display='flex'">
+            <i class="bi bi-plus-circle"></i> Nhập kho
+        </button>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">Tồn kho EVM</div>
+        <div class="stat-value">@Model.TotalEvmStock</div>
+        <div class="text-muted" style="font-size: 0.875rem;">Xe</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Tồn kho đại lý</div>
+        <div class="stat-value">@Model.TotalDealerStock</div>
+        <div class="text-muted" style="font-size: 0.875rem;">Xe</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Cảnh báo thấp</div>
+        <div class="stat-value" style="color: var(--error);">@Model.LowStockCount</div>
+        <div class="text-muted" style="font-size: 0.875rem;">< 10 xe</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Tổng giá trị kho</div>
+        <div class="stat-value">@Model.TotalStockValue.ToString("N0")</div>
+        <div class="text-muted" style="font-size: 0.875rem;">Tỷ VND</div>
+    </div>
+</div>
+
+<!-- Stocks Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="flex justify-between items-center">
+            <h3 class="card-title mb-0">Chi tiết tồn kho</h3>
+            <div class="flex gap-2">
+                <select class="form-control" style="width: 200px;">
+                    <option>Tất cả</option>
+                    <option>EVM</option>
+                    <option>Đại lý</option>
+                </select>
+                <button class="btn btn-secondary btn-sm">
+                    <i class="bi bi-download"></i> Xuất Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Mẫu xe</th>
+                        <th>Màu sắc</th>
+                        <th>Chủ sở hữu</th>
+                        <th>Tên</th>
+                        <th>Số lượng</th>
+                        <th>Giá ước tính</th>
+                        <th>Cập nhật</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var stock in Model.Stocks)
+                    {
+                        var isLowStock = stock.Qty < 10;
+                        
+                        <tr>
+                            <td><strong>@stock.VehicleName</strong></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <div style="width: 16px; height: 16px; border-radius: 50%; background: @GetColorHex(stock.Color); border: 1px solid var(--border);"></div>
+                                    <span>@stock.Color</span>
+                                </div>
+                            </td>
+                            <td>
+                                @if (stock.OwnerType == "EVM")
+                                {
+                                    <span class="badge badge-info">EVM</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-default">Đại lý</span>
+                                }
+                            </td>
+                            <td>@stock.OwnerName</td>
+                            <td>
+                                @if (isLowStock)
+                                {
+                                    <strong style="color: var(--error); font-size: 1.125rem;">@stock.Qty</strong>
+                                    <i class="bi bi-exclamation-triangle" style="color: var(--error);"></i>
+                                }
+                                else
+                                {
+                                    <strong style="font-size: 1.125rem;">@stock.Qty</strong>
+                                }
+                            </td>
+                            <td>@stock.EstimatedValue.ToString("N0") VND</td>
+                            <td>@stock.UpdatedDate.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (stock.OwnerType == "EVM")
+                                {
+                                    <button class="btn btn-secondary btn-sm" onclick="editStock(@stock.Id, @stock.Qty)">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Stock Modal -->
+<div id="addStockModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 500px; width: 90%;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Nhập kho EVM</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" asp-page-handler="AddStock">
+                <div class="form-group">
+                    <label class="form-label">Mẫu xe</label>
+                    <select class="form-control" name="vehicleId" required>
+                        <option value="">-- Chọn xe --</option>
+                        @foreach (var v in Model.Vehicles)
+                        {
+                            <option value="@v.Id">@v.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Màu sắc</label>
+                    <select class="form-control" name="color" required>
+                        <option value="BLACK">Đen</option>
+                        <option value="WHITE">Trắng</option>
+                        <option value="RED">Đỏ</option>
+                        <option value="BLUE">Xanh dương</option>
+                        <option value="GRAY">Xám</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số lượng nhập</label>
+                    <input type="number" class="form-control" name="quantity" required min="1" />
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">Nhập kho</button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('addStockModal').style.display='none'">Hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function editStock(id, currentQty) {
+            const newQty = prompt('Nhập số lượng mới:', currentQty);
+            if (newQty && !isNaN(newQty) && parseInt(newQty) >= 0) {
+                // Submit form to update
+                alert('Cập nhật thành công (chức năng đang phát triển)');
+            }
+        }
+    </script>
+}
+
+@functions {
+    string GetColorHex(string color)
+    {
+        return color.ToUpper() switch
+        {
+            "BLACK" => "#000000",
+            "WHITE" => "#FFFFFF",
+            "RED" => "#DC2626",
+            "BLUE" => "#3B82F6",
+            "GRAY" or "GREY" => "#6B7280",
+            _ => "#94A3B8"
+        };
+    }
+}
+

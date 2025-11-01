@@ -7,8 +7,8 @@ namespace Vehicle_Dealer_Management.Pages
     {
         public IActionResult OnGet()
         {
-            // Redirect to login page
-            return RedirectToPage("/Login");
+            // Redirect to home page
+            return RedirectToPage("/Home");
         }
     }
 }

@@ -1,0 +1,88 @@
+@page
+@model Vehicle_Dealer_Management.Pages.EVM.DealersModel
+@{
+    ViewData["Title"] = "Quản lý đại lý";
+    ViewData["UserRole"] = "EVM_STAFF";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "EVM Staff";
+}
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Quản lý đại lý</h1>
+            <p class="content-subtitle">Danh sách và thông tin đại lý</p>
+        </div>
+        <button class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Thêm đại lý mới
+        </button>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">Tổng đại lý</div>
+        <div class="stat-value">@Model.TotalDealers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Đang hoạt động</div>
+        <div class="stat-value" style="color: var(--success);">@Model.ActiveDealers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Tạm ngưng</div>
+        <div class="stat-value" style="color: var(--warning);">@Model.InactiveDealers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Doanh số TB</div>
+        <div class="stat-value">@Model.AvgDealerSales.ToString("N0")</div>
+    </div>
+</div>
+
+<!-- Dealers List -->
+<div class="grid grid-cols-3">
+    @foreach (var dealer in Model.Dealers)
+    {
+        <div class="card" style="cursor: pointer;">
+            <div class="card-body">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">@dealer.Name</h4>
+                        <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                            <i class="bi bi-geo-alt"></i> @dealer.Address
+                        </p>
+                        <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                            <i class="bi bi-telephone"></i> @dealer.Phone
+                        </p>
+                        <p class="text-muted" style="font-size: 0.875rem;">
+                            <i class="bi bi-envelope"></i> @dealer.Email
+                        </p>
+                    </div>
+                    @await Html.PartialAsync("_StatusBadge", dealer.Status)
+                </div>
+
+                <hr style="border-color: var(--border); margin: 1rem 0;" />
+
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem;">Doanh số (tháng)</div>
+                        <div style="font-weight: 600; color: var(--accent-cyan);">@dealer.MonthlySales.ToString("N0")</div>
+                    </div>
+                    <div>
+                        <div class="text-muted" style="font-size: 0.875rem;">Số đơn</div>
+                        <div style="font-weight: 600;">@dealer.TotalOrders</div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button class="btn btn-secondary btn-sm" style="flex: 1;">
+                        <i class="bi bi-eye"></i> Chi tiết
+                    </button>
+                    <button class="btn btn-secondary btn-sm" style="flex: 1;">
+                        <i class="bi bi-pencil"></i> Sửa
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+

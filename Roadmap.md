@@ -5,22 +5,32 @@
 
 ## 📊 Tổng quan hiện trạng
 
-### ✅ Đã hoàn thành (Current State)
+### ✅ Đã hoàn thành (Current State - UI-First Prototype)
 - [x] Cấu trúc dự án ASP.NET Core 8.0 (Razor Pages)
 - [x] Entity Framework Core với SQL Server
-- [x] Kiến trúc 3 lớp: DAL (Repository) → BLL (Service) → Presentation (Razor Pages)
-- [x] 4 Models cơ bản: `Vehicle`, `Customer`, `Sale`, `Dealer`
-- [x] Generic Repository Pattern
-- [x] Service Layer đầy đủ cho 4 entities
-- [x] Database Context cơ bản
-- [x] Migration đầu tiên đã tạo
+- [x] Database schema đầy đủ (15 tables với seed data)
+- [x] Session-based Authentication (prototype)
+- [x] Role-based Access Control (5 roles: CUSTOMER, DEALER_STAFF, DEALER_MANAGER, EVM_STAFF, EVM_ADMIN)
+- [x] Dark Theme CSS với CSS variables (`dark-theme.css`)
+- [x] Layout system (_Layout, _LayoutPublic, _PageHeader partial)
+- [x] Shared components (_StatCard, _StatusBadge)
+- [x] **5 Dashboards** (mỗi role có dashboard riêng)
+- [x] **Dealer Staff UI:** Vehicles catalog, Customers, TestDrives, Feedback, Sales (Quotes list, Create Quote, Orders list)
+- [x] **Dealer Manager UI:** Dashboard, Reports (SalesByStaff, Debts), Back button navigation
+- [x] **EVM Staff UI:** Vehicles management (Index, Create), PricePolicies, Stocks, Dealers, DealerOrders, DealerOrderDetail
+- [x] **EVM Admin UI:** Dashboard, Reports (SalesByDealer, SalesByVehicle, Inventory, Consumption), Users management
+- [x] **Customer UI:** Vehicles catalog, MyQuotes, MyOrders, TestDrive booking
+- [x] Public pages: Home, Login, Register, Profile
 
-### ❌ Chưa có (Cần implement)
-- [ ] Hệ thống Authentication & Authorization
-- [ ] Role-based Access Control (5 roles)
-- [ ] Database schema đầy đủ (15 tables)
-- [ ] Sales workflow (Quote → Order → Contract)
-- [ ] UI đẹp cho các chức năng chính
+### ⚠️ Đang làm (In Progress - UI-First)
+- [ ] Detail Pages: OrderDetail (Dealer & Customer), QuoteDetail (Dealer), Vehicle Detail (Dealer & Customer)
+
+### ❌ Chưa có (Cần implement cho UI-First)
+- [ ] Payment Management UI: Payment entry forms, Payment history display
+- [ ] Delivery Management UI: Schedule delivery, Mark delivered, Delivery tracking
+- [ ] Create Order page (hiện chỉ có CreateQuote)
+- [ ] Vehicle Comparison feature
+- [ ] Promotion management UI (apply promotions to quotes/orders)
 
 ---
 

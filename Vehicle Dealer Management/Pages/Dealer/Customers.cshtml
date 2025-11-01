@@ -1,0 +1,176 @@
+@page
+@model Vehicle_Dealer_Management.Pages.Dealer.CustomersModel
+@{
+    ViewData["Title"] = "Quản lý khách hàng";
+    // UserRole and UserName are set in code-behind from Session
+}
+
+@await Html.PartialAsync("_PageHeader")
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Quản lý khách hàng</h1>
+            <p class="content-subtitle">Danh sách và hồ sơ khách hàng</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('createModal').style.display='flex'">
+            <i class="bi bi-person-plus"></i> Thêm khách hàng
+        </button>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">Tổng khách hàng</div>
+        <div class="stat-value">@Model.TotalCustomers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Khách mới (tháng)</div>
+        <div class="stat-value" style="color: var(--success);">@Model.NewCustomers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Có tài khoản</div>
+        <div class="stat-value" style="color: var(--info);">@Model.WithAccount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Đã mua xe</div>
+        <div class="stat-value" style="color: var(--accent-cyan);">@Model.WithPurchase</div>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="grid grid-cols-4 gap-2">
+            <div style="grid-column: span 2;">
+                <input type="text" class="form-control" placeholder="Tìm theo tên, email, số điện thoại..." />
+            </div>
+            <select class="form-control">
+                <option>Tất cả</option>
+                <option>Có tài khoản</option>
+                <option>Đã mua xe</option>
+                <option>Chưa mua xe</option>
+            </select>
+            <button class="btn btn-primary">
+                <i class="bi bi-search"></i> Tìm kiếm
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ tên</th>
+                        <th>Số điện thoại</th>
+                        <th>Email</th>
+                        <th>Địa chỉ</th>
+                        <th>Đơn hàng</th>
+                        <th>Tổng chi tiêu</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var customer in Model.Customers)
+                    {
+                        <tr>
+                            <td><strong>#@customer.Id</strong></td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">
+                                        @customer.FullName.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div>
+                                        <div><strong>@customer.FullName</strong></div>
+                                        @if (customer.HasAccount)
+                                        {
+                                            <div style="font-size: 0.75rem; color: var(--success);">
+                                                <i class="bi bi-check-circle-fill"></i> Có tài khoản
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@customer.Phone</td>
+                            <td class="text-muted">@customer.Email</td>
+                            <td class="text-muted">@customer.Address</td>
+                            <td>
+                                @if (customer.OrderCount > 0)
+                                {
+                                    <strong style="color: var(--accent-cyan);">@customer.OrderCount</strong>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">0</span>
+                                }
+                            </td>
+                            <td>
+                                @if (customer.TotalSpent > 0)
+                                {
+                                    <strong>@customer.TotalSpent.ToString("N0") VND</strong>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-eye"></i> Chi tiết
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Thêm khách hàng mới</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="form-group">
+                    <label class="form-label">Họ và tên</label>
+                    <input type="text" class="form-control" name="fullName" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số điện thoại</label>
+                    <input type="tel" class="form-control" name="phone" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Địa chỉ</label>
+                    <textarea class="form-control" name="address" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Số CMND/CCCD (Tùy chọn)</label>
+                    <input type="text" class="form-control" name="identityNo" />
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check"></i> Tạo khách hàng
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('createModal').style.display='none'">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

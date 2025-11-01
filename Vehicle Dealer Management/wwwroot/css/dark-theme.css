@@ -719,3 +719,38 @@ select.form-control {
     color: var(--text-muted);
 }
 
+/* ============================================
+   Breadcrumb & Back Button
+   ============================================ */
+
+.page-breadcrumb {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.back-button:hover {
+    background: var(--black);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    transform: translateX(-2px);
+}
+
+.back-button i {
+    font-size: 1rem;
+}
+

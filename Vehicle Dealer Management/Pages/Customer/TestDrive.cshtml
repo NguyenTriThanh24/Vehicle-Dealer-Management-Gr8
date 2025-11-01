@@ -1,0 +1,159 @@
+@page
+@model Vehicle_Dealer_Management.Pages.Customer.TestDriveModel
+@{
+    ViewData["Title"] = "Lịch lái thử";
+    ViewData["UserRole"] = "CUSTOMER";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "Customer";
+}
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Lịch lái thử của tôi</h1>
+            <p class="content-subtitle">Đặt lịch và theo dõi lịch hẹn lái thử</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('bookModal').style.display='flex'">
+            <i class="bi bi-calendar-plus"></i> Đặt lịch mới
+        </button>
+    </div>
+</div>
+
+<!-- My Test Drives -->
+@if (Model.TestDrives.Any())
+{
+    @foreach (var td in Model.TestDrives)
+    {
+        var isPast = td.ScheduleTime < DateTime.Now;
+        
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">@td.VehicleName</h4>
+                        <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                            <i class="bi bi-shop"></i> @td.DealerName
+                        </p>
+                        <p class="text-muted" style="font-size: 0.875rem; margin: 0;">
+                            <i class="bi bi-geo-alt"></i> @td.DealerAddress
+                        </p>
+                    </div>
+                    @await Html.PartialAsync("_StatusBadge", td.Status)
+                </div>
+
+                <div style="background: var(--black); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="bi bi-calendar3" style="color: var(--accent-cyan);"></i>
+                        <strong style="font-size: 1.125rem;">@td.ScheduleTime.ToString("dddd, dd/MM/yyyy")</strong>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="bi bi-clock" style="color: var(--accent-cyan);"></i>
+                        <strong style="font-size: 1.125rem;">@td.ScheduleTime.ToString("HH:mm")</strong>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(td.Note))
+                {
+                    <div style="padding: 0.75rem; background: var(--surface); border-radius: var(--radius-sm); margin-bottom: 1rem;">
+                        <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Ghi chú:</div>
+                        <p style="margin: 0;">@td.Note</p>
+                    </div>
+                }
+
+                <div class="flex gap-2">
+                    @if (td.Status == "REQUESTED")
+                    {
+                        <button class="btn btn-secondary btn-sm" disabled>
+                            <i class="bi bi-clock-history"></i> Chờ xác nhận
+                        </button>
+                    }
+                    else if (td.Status == "CONFIRMED" && !isPast)
+                    {
+                        <span style="color: var(--success);">
+                            <i class="bi bi-check-circle"></i> Đã xác nhận - Hãy đến đúng giờ
+                        </span>
+                    }
+                    
+                    @if (!isPast && td.Status != "DONE" && td.Status != "CANCELLED")
+                    {
+                        <button class="btn btn-danger btn-sm">
+                            <i class="bi bi-x-circle"></i> Hủy lịch
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-title">Chưa có lịch lái thử</div>
+                <div class="empty-state-text">Đặt lịch để trải nghiệm xe điện!</div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Booking Modal -->
+<div id="bookModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 500px; width: 90%;">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Đặt lịch lái thử</h3>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="form-group">
+                    <label class="form-label">Đại lý</label>
+                    <select class="form-control" name="dealerId" required>
+                        <option value="">-- Chọn đại lý --</option>
+                        @foreach (var d in Model.AllDealers)
+                        {
+                            <option value="@d.Id">@d.Name - @d.Address</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mẫu xe</label>
+                    <select class="form-control" name="vehicleId" required>
+                        <option value="">-- Chọn xe --</option>
+                        @foreach (var v in Model.AllVehicles)
+                        {
+                            <option value="@v.Id">@v.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ngày lái thử</label>
+                    <input type="date" class="form-control" name="date" required min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Giờ</label>
+                    <select class="form-control" name="time" required>
+                        <option value="09:00">09:00</option>
+                        <option value="10:00">10:00</option>
+                        <option value="11:00">11:00</option>
+                        <option value="14:00">14:00</option>
+                        <option value="15:00">15:00</option>
+                        <option value="16:00">16:00</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ghi chú (tùy chọn)</label>
+                    <textarea class="form-control" name="note" rows="2" placeholder="Yêu cầu đặc biệt..."></textarea>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check"></i> Đặt lịch
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('bookModal').style.display='none'">
+                        Hủy
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

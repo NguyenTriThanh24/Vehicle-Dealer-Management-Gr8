@@ -1,0 +1,132 @@
+@page
+@model Vehicle_Dealer_Management.Pages.Admin.Reports.SalesByVehicleModel
+@{
+    ViewData["Title"] = "Báo cáo doanh số theo xe";
+    ViewData["UserRole"] = "EVM_ADMIN";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "Admin";
+}
+
+<div class="content-header">
+    <h1 class="content-title">Báo cáo doanh số theo xe</h1>
+    <p class="content-subtitle">Phân tích xe bán chạy và doanh thu từng mẫu</p>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">Tổng xe đã bán</div>
+        <div class="stat-value">@Model.TotalSold</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Tổng doanh thu</div>
+        <div class="stat-value">@Model.TotalRevenue.ToString("N0")</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Mẫu bán chạy nhất</div>
+        <div class="stat-value" style="font-size: 1.25rem;">@Model.TopVehicle</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Giá trị TB/xe</div>
+        <div class="stat-value">@Model.AvgPrice.ToString("N0")</div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h3 class="card-title mb-0">Biểu đồ doanh số theo xe</h3>
+    </div>
+    <div class="card-body">
+        <div class="chart-container">
+            <div class="chart-placeholder">
+                <i class="bi bi-bar-chart-fill" style="font-size: 4rem; opacity: 0.3;"></i>
+                <p>Biểu đồ cột (Chart.js placeholder)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="flex justify-between items-center">
+            <h3 class="card-title mb-0">Chi tiết theo mẫu xe</h3>
+            <button class="btn btn-secondary btn-sm">
+                <i class="bi bi-download"></i> Xuất Excel
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mẫu xe</th>
+                        <th>Phiên bản</th>
+                        <th>Số lượng bán</th>
+                        <th>Doanh thu</th>
+                        <th>% Tổng doanh thu</th>
+                        <th>Giá TB</th>
+                        <th>Tốc độ bán</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.VehicleReports.Count; i++)
+                    {
+                        var vehicle = Model.VehicleReports[i];
+                        var revenuePercent = Model.TotalRevenue > 0 ? (vehicle.Revenue / Model.TotalRevenue * 100) : 0;
+                        
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <img src="@vehicle.ImageUrl" alt="@vehicle.ModelName" style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;" />
+                                    <strong>@vehicle.ModelName</strong>
+                                </div>
+                            </td>
+                            <td>@vehicle.VariantName</td>
+                            <td>
+                                <strong style="font-size: 1.125rem;">@vehicle.QuantitySold</strong>
+                                <span class="text-muted">xe</span>
+                            </td>
+                            <td><strong style="color: var(--accent-cyan);">@vehicle.Revenue.ToString("N0") VND</strong></td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div style="width: 100px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: @revenuePercent.ToString("F1")%; height: 100%; background: var(--success);"></div>
+                                    </div>
+                                    <span>@revenuePercent.ToString("F1")%</span>
+                                </div>
+                            </td>
+                            <td>@vehicle.AvgPrice.ToString("N0") VND</td>
+                            <td>
+                                @if (vehicle.Speed == "FAST")
+                                {
+                                    <span class="badge badge-success">⚡ Nhanh</span>
+                                }
+                                else if (vehicle.Speed == "MEDIUM")
+                                {
+                                    <span class="badge badge-warning">⏱️ TB</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-error">🐌 Chậm</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot style="background: var(--black); font-weight: 600;">
+                    <tr>
+                        <td colspan="3">TỔNG</td>
+                        <td><strong>@Model.TotalSold xe</strong></td>
+                        <td><strong style="color: var(--accent-cyan);">@Model.TotalRevenue.ToString("N0") VND</strong></td>
+                        <td colspan="3"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,148 @@
+@page
+@model Vehicle_Dealer_Management.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Quản lý người dùng";
+    ViewData["UserRole"] = "EVM_ADMIN";
+    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "Admin";
+}
+
+<div class="content-header">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="content-title">Quản lý người dùng</h1>
+            <p class="content-subtitle">Danh sách và phân quyền người dùng</p>
+        </div>
+        <button class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Thêm người dùng
+        </button>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-5 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">Tổng người dùng</div>
+        <div class="stat-value">@Model.TotalUsers</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Customers</div>
+        <div class="stat-value" style="color: var(--info);">@Model.CustomerCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Dealer Staff</div>
+        <div class="stat-value" style="color: var(--accent-cyan);">@Model.DealerStaffCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">EVM Staff</div>
+        <div class="stat-value" style="color: var(--success);">@Model.EvmStaffCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Admins</div>
+        <div class="stat-value" style="color: var(--warning);">@Model.AdminCount</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="grid grid-cols-4 gap-2">
+            <input type="text" class="form-control" placeholder="Tìm theo tên, email..." />
+            <select class="form-control">
+                <option>Tất cả vai trò</option>
+                @foreach (var role in Model.AllRoles)
+                {
+                    <option>@role</option>
+                }
+            </select>
+            <select class="form-control">
+                <option>Tất cả đại lý</option>
+                @foreach (var dealer in Model.AllDealers)
+                {
+                    <option>@dealer</option>
+                }
+            </select>
+            <button class="btn btn-primary">
+                <i class="bi bi-search"></i> Tìm kiếm
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ tên</th>
+                        <th>Email</th>
+                        <th>Số ĐT</th>
+                        <th>Vai trò</th>
+                        <th>Đại lý</th>
+                        <th>Ngày tạo</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model.Users)
+                    {
+                        <tr>
+                            <td><strong>#@user.Id</strong></td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.875rem;">
+                                        @user.FullName.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <strong>@user.FullName</strong>
+                                </div>
+                            </td>
+                            <td class="text-muted">@user.Email</td>
+                            <td>@user.Phone</td>
+                            <td>
+                                @if (user.RoleCode == "EVM_ADMIN")
+                                {
+                                    <span class="badge badge-warning">Admin</span>
+                                }
+                                else if (user.RoleCode == "EVM_STAFF")
+                                {
+                                    <span class="badge badge-success">EVM Staff</span>
+                                }
+                                else if (user.RoleCode.StartsWith("DEALER"))
+                                {
+                                    <span class="badge badge-info">@user.RoleName</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-default">@user.RoleName</span>
+                                }
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(user.DealerName))
+                                {
+                                    <span>@user.DealerName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>@user.CreatedAt.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge badge-success">Active</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm">
+                                    <i class="bi bi-pencil"></i> Sửa
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

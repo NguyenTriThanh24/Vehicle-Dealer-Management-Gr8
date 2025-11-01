@@ -34,13 +34,13 @@ Seed data sẽ tự động chạy trong Development mode.
 
 Sau khi seed data, dùng các tài khoản sau để đăng nhập:
 
-| Email | Password | Role |
-|-------|----------|------|
-| `customer@test.com` | `123456` | CUSTOMER |
-| `dealerstaff@test.com` | `123456` | DEALER_STAFF |
-| `dealermanager@test.com` | `123456` | DEALER_MANAGER |
-| `evmstaff@test.com` | `123456` | EVM_STAFF |
-| `admin@test.com` | `123456` | EVM_ADMIN |
+| Email | Password | Role | Mô tả |
+|-------|----------|------|-------|
+| `customer@test.com` | `123456` | CUSTOMER | Khách hàng - Xem xe, đặt hàng, lái thử |
+| `dealerstaff@test.com` | `123456` | DEALER_STAFF | NV Đại lý - Tạo báo giá, quản lý bán hàng |
+| `dealermanager@test.com` | `123456` | DEALER_MANAGER | QL Đại lý - Báo cáo doanh số, công nợ |
+| `evmstaff@test.com` | `123456` | EVM_STAFF | NV Hãng - Quản lý xe, giá, tồn kho, đại lý |
+| `admin@test.com` | `123456` | EVM_ADMIN | Admin - Dashboard, báo cáo phân tích |
 
 ## 📊 Seed Data
 
