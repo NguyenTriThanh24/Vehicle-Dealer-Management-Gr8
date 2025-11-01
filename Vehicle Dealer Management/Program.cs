@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.BLL.Services;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Repositories;
+using Vehicle_Dealer_Management.DAL.IRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 

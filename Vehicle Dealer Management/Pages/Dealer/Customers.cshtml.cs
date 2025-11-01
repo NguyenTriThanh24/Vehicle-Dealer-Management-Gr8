@@ -56,6 +56,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 );
             }
 
+            // Parse dealerId once at the beginning
+            var dealerIdInt = int.Parse(dealerId);
+
             // Apply filter type
             if (!string.IsNullOrWhiteSpace(filter))
             {
@@ -65,7 +68,6 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 }
                 else if (filter == "withPurchase")
                 {
-                    var dealerIdInt = int.Parse(dealerId);
                     var customerIdsWithOrders = await _context.SalesDocuments
                         .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
                         .Select(s => s.CustomerId)
@@ -75,7 +77,6 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 }
                 else if (filter == "noPurchase")
                 {
-                    var dealerIdInt = int.Parse(dealerId);
                     var customerIdsWithOrders = await _context.SalesDocuments
                         .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
                         .Select(s => s.CustomerId)
@@ -86,7 +87,6 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             }
 
             // Get order counts for each customer (need to do before filtering)
-            var dealerIdInt = int.Parse(dealerId);
             var orderCounts = await _context.SalesDocuments
                 .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
                 .GroupBy(s => s.CustomerId)

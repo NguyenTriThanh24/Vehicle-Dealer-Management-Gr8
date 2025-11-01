@@ -39,7 +39,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Dealers
             // Get dealer orders
             var dealerOrders = await _context.DealerOrders
                 .Where(o => o.DealerId == id.Value)
-                .OrderByDescending(o => o.CreatedDate)
+                .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
 
             // Get sales documents (orders) from this dealer

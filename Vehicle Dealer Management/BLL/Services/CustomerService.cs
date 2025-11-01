@@ -1,5 +1,6 @@
 using Vehicle_Dealer_Management.DAL.Models;
-using Vehicle_Dealer_Management.DAL.Repositories;
+using Vehicle_Dealer_Management.DAL.IRepository;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.BLL.Services
 {

@@ -51,9 +51,30 @@
                 </div>
                 <select name="filter" class="form-control">
                     <option value="">Tất cả</option>
-                    <option value="hasAccount" @(Model.FilterType == "hasAccount" ? "selected" : "")>Có tài khoản</option>
-                    <option value="withPurchase" @(Model.FilterType == "withPurchase" ? "selected" : "")>Đã mua xe</option>
-                    <option value="noPurchase" @(Model.FilterType == "noPurchase" ? "selected" : "")>Chưa mua xe</option>
+                    @if (Model.FilterType == "hasAccount")
+                    {
+                        <option value="hasAccount" selected>Có tài khoản</option>
+                    }
+                    else
+                    {
+                        <option value="hasAccount">Có tài khoản</option>
+                    }
+                    @if (Model.FilterType == "withPurchase")
+                    {
+                        <option value="withPurchase" selected>Đã mua xe</option>
+                    }
+                    else
+                    {
+                        <option value="withPurchase">Đã mua xe</option>
+                    }
+                    @if (Model.FilterType == "noPurchase")
+                    {
+                        <option value="noPurchase" selected>Chưa mua xe</option>
+                    }
+                    else
+                    {
+                        <option value="noPurchase">Chưa mua xe</option>
+                    }
                 </select>
                 <div class="flex gap-1">
                     <button type="submit" class="btn btn-primary">

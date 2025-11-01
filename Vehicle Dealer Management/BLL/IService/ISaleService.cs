@@ -1,6 +1,6 @@
 using Vehicle_Dealer_Management.DAL.Models;
 
-namespace Vehicle_Dealer_Management.BLL.Services
+namespace Vehicle_Dealer_Management.BLL.IService
 {
     public interface ISaleService
     {

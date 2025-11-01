@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Models;
+using Vehicle_Dealer_Management.DAL.IRepository;
 
 namespace Vehicle_Dealer_Management.DAL.Repositories
 {

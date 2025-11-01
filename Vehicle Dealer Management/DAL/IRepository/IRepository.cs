@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Vehicle_Dealer_Management.DAL.Repositories
+namespace Vehicle_Dealer_Management.DAL.IRepository
 {
     public interface IRepository<T> where T : class
     {

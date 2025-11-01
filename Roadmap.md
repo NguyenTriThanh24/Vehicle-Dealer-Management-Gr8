@@ -261,8 +261,14 @@
   - ✅ Auto update order status to DELIVERED
 
 ### 3.4 Customer Management
-- [ ] **3.4.1** Customer list (table với search)
-- [ ] **3.4.2** Create/Edit customer (form đẹp)
+- [x] **3.4.1** Customer list (table với search)
+  - ✅ Functional search theo tên, email, số điện thoại
+  - ✅ Filter theo: Tất cả, Có tài khoản, Đã mua xe, Chưa mua xe
+  - ✅ Clear filter button khi có active filter
+- [x] **3.4.2** Create/Edit customer (form đẹp)
+  - ✅ Modal form cho Create và Edit
+  - ✅ Validation: Phone/Email unique
+  - ✅ Toast notifications cho success/error
 - [ ] **3.4.3** Test drive calendar/view
   - ✅ Calendar view hoặc list view
   - ✅ Status badges
@@ -308,14 +314,20 @@
 **Note:** EVM Staff và EVM Admin có thể dùng chung một số pages, chỉ khác ở Reports và System Management
 
 ### 4.1 Product Management
-- [ ] **4.1.1** Vehicle catalog management
+- [x] **4.1.1** Vehicle catalog management
   - ✅ CRUD: Create/Edit/Delete
   - ✅ Form với image upload (hoặc URL input)
   - ✅ Spec editor (JSON editor đơn giản hoặc form fields)
+  - ✅ Delete button với soft delete (DISCONTINUED status)
+  - ✅ Validation: Không xóa nếu có orders/quotes
+  - ✅ Toast notifications
   
-- [ ] **4.1.2** Price Policy management
+- [x] **4.1.2** Price Policy management
   - ✅ List price policies
   - ✅ Create new (select vehicle, dealer, set prices, date range)
+  - ✅ Edit functionality: Modal form với date range picker
+  - ✅ Delete functionality: Confirmation dialog
+  - ✅ Toast notifications cho success/error
   - ✅ Simple validation (no overlap - có thể skip nếu phức tạp)
   
 - [ ] **4.1.3** Stock management
@@ -323,7 +335,14 @@
   - ✅ Update quantities (simple +/- buttons)
 
 ### 4.2 Dealer Management
-- [ ] **4.2.1** Dealer list & detail
+- [x] **4.2.1** Dealer list & detail
+  - ✅ Dealer list với cards layout
+  - ✅ Dealer detail page (`/EVM/Dealers/Detail`)
+  - ✅ Hiển thị: Thông tin đại lý, Staff count, Total orders
+  - ✅ Debt summary: Tổng doanh số, Đã thanh toán, Còn nợ
+  - ✅ Recent orders table (10 đơn gần nhất)
+  - ✅ Stock summary table (grouped by vehicle)
+  - ✅ Navigation: Link từ dealer name hoặc "Chi tiết" button
 - [ ] **4.2.2** Dealer Order processing
   - ✅ List orders (status: SUBMITTED)
   - ✅ Approve/Reject buttons
@@ -591,12 +610,17 @@ hr {
 - [x] Payment tracking (Add Payment form, history, auto status update)
 - [x] Delivery tracking (Schedule, Mark Delivered)
 - [x] Customer Portal (Vehicles, MyQuotes, MyOrders, TestDrive, OrderDetail với timeline)
-- [x] EVM Product Management (Vehicles, PricePolicies, Stocks, Dealers, DealerOrders)
+- [x] EVM Product Management (Vehicles CRUD, PricePolicies CRUD, Stocks, Dealers với Detail page, DealerOrders)
+- [x] Customer Management (Search/Filter, Create/Edit với validation)
 - [x] Admin Dashboard & Reports (Sales, Inventory, Consumption, Users)
 - [x] Dealer Manager Dashboard & Reports (SalesByStaff, Debts)
 
 ### Nice to Have (Nếu có thời gian)
-- [ ] Test Drive booking (UI đẹp)
+- [x] Customer Search/Filter: Functional search và filter trong Customers page ✅
+- [x] Price Policy Edit/Delete: Edit modal và Delete functionality với confirmation ✅
+- [x] Vehicle Delete: Delete button với soft delete (DISCONTINUED) và validation ✅
+- [x] Dealer Detail Page: Detail page hiển thị thông tin, orders, debts, stock summary ✅
+- [ ] Test Drive booking (UI đẹp) - Đã có POST handler, còn thiếu calendar view
 - [ ] Feedback system
 - [ ] Promotions (basic)
 - [ ] Simple reports
