@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 using System.Text.Json;
 
@@ -8,10 +9,14 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
 {
     public class EditModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVehicleService _vehicleService;
+        private readonly ApplicationDbContext _context; // Tạm thời cần cho unique validation
 
-        public EditModel(ApplicationDbContext context)
+        public EditModel(
+            IVehicleService vehicleService,
+            ApplicationDbContext context)
         {
+            _vehicleService = vehicleService;
             _context = context;
         }
 
@@ -31,7 +36,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
                 return RedirectToPage("/EVM/Vehicles/Index");
             }
 
-            var vehicle = await _context.Vehicles.FindAsync(id.Value);
+            var vehicle = await _vehicleService.GetVehicleByIdAsync(id.Value);
             if (vehicle == null)
             {
                 TempData["Error"] = "Không tìm thấy xe này.";
@@ -105,7 +110,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
                 return await OnGetAsync(vehicleId);
             }
 
-            var vehicle = await _context.Vehicles.FindAsync(vehicleId);
+            var vehicle = await _vehicleService.GetVehicleByIdAsync(vehicleId);
             if (vehicle == null)
             {
                 TempData["Error"] = "Không tìm thấy xe này.";
@@ -113,8 +118,8 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
             }
 
             // Validate ModelName + VariantName unique (excluding current vehicle)
-            var existing = await _context.Vehicles
-                .FirstOrDefaultAsync(v => v.ModelName == modelName.Trim() &&
+            var allVehicles = await _vehicleService.GetAllVehiclesAsync();
+            var existing = allVehicles.FirstOrDefault(v => v.ModelName == modelName.Trim() &&
                                           v.VariantName == variantName.Trim() &&
                                           v.Id != vehicleId);
             if (existing != null)
@@ -154,15 +159,14 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
 
             var specJson = JsonSerializer.Serialize(specs);
 
-            // Update vehicle
+            // Update vehicle using Service
             vehicle.ModelName = modelName.Trim();
             vehicle.VariantName = variantName.Trim();
             vehicle.ImageUrl = imageUrl;
             vehicle.Status = status;
             vehicle.SpecJson = specJson;
-            vehicle.UpdatedDate = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
+            await _vehicleService.UpdateVehicleAsync(vehicle);
 
             TempData["Success"] = "Cập nhật thông tin xe thành công!";
             return RedirectToPage("/EVM/Vehicles/Index");

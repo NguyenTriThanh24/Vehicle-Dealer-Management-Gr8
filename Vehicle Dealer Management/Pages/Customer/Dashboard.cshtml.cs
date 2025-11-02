@@ -3,16 +3,24 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Models;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class DashboardModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IVehicleService _vehicleService;
 
-        public DashboardModel(ApplicationDbContext context)
+        public DashboardModel(
+            ApplicationDbContext context,
+            ISalesDocumentService salesDocumentService,
+            IVehicleService vehicleService)
         {
             _context = context;
+            _salesDocumentService = salesDocumentService;
+            _vehicleService = vehicleService;
         }
 
         public string CustomerName { get; set; } = "";
@@ -44,36 +52,34 @@ namespace Vehicle_Dealer_Management.Pages.Customer
 
             if (customerProfile != null)
             {
-                // Mock data for now (will be replaced with real queries later)
-                QuotesCount = await _context.SalesDocuments
-                    .Where(s => s.CustomerId == customerProfile.Id && s.Type == "QUOTE")
-                    .CountAsync();
+                // Get quotes and orders using service
+                var quotes = await _salesDocumentService.GetSalesDocumentsByCustomerIdAsync(customerProfile.Id, "QUOTE");
+                QuotesCount = quotes.Count();
 
-                OrdersCount = await _context.SalesDocuments
-                    .Where(s => s.CustomerId == customerProfile.Id && s.Type == "ORDER")
-                    .CountAsync();
+                var orders = await _salesDocumentService.GetSalesDocumentsByCustomerIdAsync(customerProfile.Id, "ORDER");
+                OrdersCount = orders.Count();
 
                 TestDrivesCount = await _context.TestDrives
                     .Where(t => t.CustomerId == customerProfile.Id)
                     .CountAsync();
 
-                // Get recent orders (mock 3 orders for demo)
-                var recentOrders = await _context.SalesDocuments
-                    .Where(s => s.CustomerId == customerProfile.Id && s.Type == "ORDER")
+                // Get recent orders
+                var recentOrders = orders
                     .OrderByDescending(s => s.CreatedAt)
                     .Take(5)
-                    .ToListAsync();
+                    .ToList();
 
                 RecentOrders = recentOrders.Select(o => new OrderViewModel
                 {
                     Id = o.Id,
                     CreatedAt = o.CreatedAt,
                     Status = o.Status,
-                    TotalAmount = 1500000000 // Mock amount
+                    TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0
                 }).ToList();
             }
 
-            AvailableVehicles = await _context.Vehicles.CountAsync(v => v.Status == "AVAILABLE");
+            var availableVehicles = await _vehicleService.GetAvailableVehiclesAsync();
+            AvailableVehicles = availableVehicles.Count();
 
             return Page();
         }

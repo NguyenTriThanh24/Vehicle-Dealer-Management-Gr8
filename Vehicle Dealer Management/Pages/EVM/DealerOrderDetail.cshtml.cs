@@ -3,16 +3,27 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using System.Text.Json;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.EVM
 {
     public class DealerOrderDetailModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDealerService _dealerService;
+        private readonly IStockService _stockService;
+        private readonly IVehicleService _vehicleService;
 
-        public DealerOrderDetailModel(ApplicationDbContext context)
+        public DealerOrderDetailModel(
+            ApplicationDbContext context,
+            IDealerService dealerService,
+            IStockService stockService,
+            IVehicleService vehicleService)
         {
             _context = context;
+            _dealerService = dealerService;
+            _stockService = stockService;
+            _vehicleService = vehicleService;
         }
 
         public DealerOrderViewModel Order { get; set; } = new();

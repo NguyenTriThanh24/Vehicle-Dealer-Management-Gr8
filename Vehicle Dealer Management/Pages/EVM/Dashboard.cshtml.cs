@@ -2,16 +2,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.EVM
 {
     public class DashboardModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IVehicleService _vehicleService;
+        private readonly IStockService _stockService;
+        private readonly IDealerService _dealerService;
 
-        public DashboardModel(ApplicationDbContext context)
+        public DashboardModel(
+            ApplicationDbContext context,
+            IVehicleService vehicleService,
+            IStockService stockService,
+            IDealerService dealerService)
         {
             _context = context;
+            _vehicleService = vehicleService;
+            _stockService = stockService;
+            _dealerService = dealerService;
         }
 
         public string UserName { get; set; } = "";
@@ -44,36 +55,37 @@ namespace Vehicle_Dealer_Management.Pages.EVM
             UserName = user.FullName;
 
             // Get vehicles
-            TotalVehicles = await _context.Vehicles.CountAsync();
-            AvailableVehicles = await _context.Vehicles.CountAsync(v => v.Status == "AVAILABLE");
+            var allVehicles = await _vehicleService.GetAllVehiclesAsync();
+            TotalVehicles = allVehicles.Count();
+            AvailableVehicles = allVehicles.Count(v => v.Status == "AVAILABLE");
 
             // Get EVM stock
-            var evmStocks = await _context.Stocks
-                .Where(s => s.OwnerType == "EVM")
-                .Include(s => s.Vehicle)
-                .ToListAsync();
+            var evmStocks = (await _stockService.GetStocksByOwnerAsync("EVM", 0)).ToList();
 
             TotalStock = (int)evmStocks.Sum(s => (long)s.Qty);
 
-            StockSummary = evmStocks
+            StockSummary = (await Task.WhenAll(evmStocks
                 .OrderByDescending(s => s.Qty)
                 .Take(10)
-                .Select(s => new StockViewModel
+                .Select(async s =>
                 {
-                    VehicleName = $"{s.Vehicle?.ModelName} {s.Vehicle?.VariantName}",
-                    Color = s.ColorCode,
-                    Qty = (int)s.Qty
-                })
-                .ToList();
+                    var vehicle = await _vehicleService.GetVehicleByIdAsync(s.VehicleId);
+                    return new StockViewModel
+                    {
+                        VehicleName = vehicle != null ? $"{vehicle.ModelName} {vehicle.VariantName}" : "N/A",
+                        Color = s.ColorCode,
+                        Qty = (int)s.Qty
+                    };
+                }))).ToList();
 
             // Get dealers
-            TotalDealers = await _context.Dealers.CountAsync();
-            ActiveDealers = await _context.Dealers.CountAsync(d => d.Status == "ACTIVE");
+            var allDealers = (await _dealerService.GetAllDealersAsync()).ToList();
+            TotalDealers = allDealers.Count;
+            ActiveDealers = allDealers.Count(d => d.Status == "ACTIVE");
 
-            var activeDealers = await _context.Dealers
-                .Where(d => d.Status == "ACTIVE")
+            var activeDealers = (await _dealerService.GetActiveDealersAsync())
                 .Take(5)
-                .ToListAsync();
+                .ToList();
 
             ActiveDealersList = activeDealers.Select(d => new DealerViewModel
             {

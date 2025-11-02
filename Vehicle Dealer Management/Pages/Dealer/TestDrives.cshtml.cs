@@ -3,16 +3,24 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Models;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer
 {
     public class TestDrivesModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICustomerService _customerService;
+        private readonly IVehicleService _vehicleService;
 
-        public TestDrivesModel(ApplicationDbContext context)
+        public TestDrivesModel(
+            ApplicationDbContext context,
+            ICustomerService customerService,
+            IVehicleService vehicleService)
         {
             _context = context;
+            _customerService = customerService;
+            _vehicleService = vehicleService;
         }
 
         public string Filter { get; set; } = "all";
@@ -37,24 +45,21 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             var dealerIdInt = int.Parse(dealerId);
 
             // Get customers for create form
-            AllCustomers = await _context.CustomerProfiles
-                .Select(c => new CustomerSimple
-                {
-                    Id = c.Id,
-                    Name = c.FullName,
-                    Phone = c.Phone
-                })
-                .ToListAsync();
+            var customers = await _customerService.GetAllCustomersAsync();
+            AllCustomers = customers.Select(c => new CustomerSimple
+            {
+                Id = c.Id,
+                Name = c.FullName,
+                Phone = c.PhoneNumber ?? ""
+            }).ToList();
 
             // Get vehicles for create form
-            AllVehicles = await _context.Vehicles
-                .Where(v => v.Status == "AVAILABLE")
-                .Select(v => new VehicleSimple
-                {
-                    Id = v.Id,
-                    Name = v.ModelName + " " + v.VariantName
-                })
-                .ToListAsync();
+            var vehicles = await _vehicleService.GetAvailableVehiclesAsync();
+            AllVehicles = vehicles.Select(v => new VehicleSimple
+            {
+                Id = v.Id,
+                Name = v.ModelName + " " + v.VariantName
+            }).ToList();
 
             // Get test drives
             var query = _context.TestDrives

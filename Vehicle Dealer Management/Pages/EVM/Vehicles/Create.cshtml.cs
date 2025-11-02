@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Models;
 using System.Text.Json;
 
@@ -8,11 +8,18 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
 {
     public class CreateModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVehicleService _vehicleService;
+        private readonly IPricePolicyService _pricePolicyService;
+        private readonly IStockService _stockService;
 
-        public CreateModel(ApplicationDbContext context)
+        public CreateModel(
+            IVehicleService vehicleService,
+            IPricePolicyService pricePolicyService,
+            IStockService stockService)
         {
-            _context = context;
+            _vehicleService = vehicleService;
+            _pricePolicyService = pricePolicyService;
+            _stockService = stockService;
         }
 
         public string? ErrorMessage { get; set; }
@@ -88,53 +95,43 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
 
             var specJson = JsonSerializer.Serialize(specs);
 
-            // Create vehicle
+            // Create vehicle using Service
             var vehicle = new Vehicle
             {
                 ModelName = modelName.Trim(),
                 VariantName = variantName.Trim(),
                 ImageUrl = imageUrl,
                 Status = status,
-                SpecJson = specJson,
-                CreatedDate = DateTime.UtcNow
+                SpecJson = specJson
             };
 
-            _context.Vehicles.Add(vehicle);
-            await _context.SaveChangesAsync();
+            var createdVehicle = await _vehicleService.CreateVehicleAsync(vehicle);
 
             // Create initial price policy if provided
             if (msrp.HasValue && msrp.Value > 0)
             {
                 var pricePolicy = new PricePolicy
                 {
-                    VehicleId = vehicle.Id,
+                    VehicleId = createdVehicle.Id,
                     DealerId = null, // Global price
                     Msrp = msrp.Value,
                     WholesalePrice = wholesalePrice ?? msrp.Value * 0.9m,
                     ValidFrom = DateTime.UtcNow,
-                    ValidTo = null,
-                    CreatedDate = DateTime.UtcNow
+                    ValidTo = null
                 };
 
-                _context.PricePolicies.Add(pricePolicy);
-                await _context.SaveChangesAsync();
+                await _pricePolicyService.CreatePricePolicyAsync(pricePolicy);
             }
 
             // Create initial stock if provided
             if (initialStock.HasValue && initialStock.Value > 0)
             {
-                var stock = new Stock
-                {
-                    OwnerType = "EVM",
-                    OwnerId = 0,
-                    VehicleId = vehicle.Id,
-                    ColorCode = "BLACK", // Default color
-                    Qty = initialStock.Value,
-                    CreatedDate = DateTime.UtcNow
-                };
-
-                _context.Stocks.Add(stock);
-                await _context.SaveChangesAsync();
+                await _stockService.CreateOrUpdateStockAsync(
+                    "EVM", 
+                    0, 
+                    createdVehicle.Id, 
+                    "BLACK", 
+                    initialStock.Value);
             }
 
             return RedirectToPage("/EVM/Vehicles/Index");

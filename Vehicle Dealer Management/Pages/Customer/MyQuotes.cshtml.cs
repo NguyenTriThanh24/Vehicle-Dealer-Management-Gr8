@@ -1,16 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class MyQuotesModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly ApplicationDbContext _context; // Cần cho CustomerProfile
 
-        public MyQuotesModel(ApplicationDbContext context)
+        public MyQuotesModel(
+            ISalesDocumentService salesDocumentService,
+            ApplicationDbContext context)
         {
+            _salesDocumentService = salesDocumentService;
             _context = context;
         }
 
@@ -33,13 +38,8 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 return Page();
             }
 
-            // Get quotes
-            var quotes = await _context.SalesDocuments
-                .Where(s => s.CustomerId == customerProfile.Id && s.Type == "QUOTE")
-                .Include(s => s.Dealer)
-                .Include(s => s.Lines)
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+            // Get quotes using Service
+            var quotes = await _salesDocumentService.GetSalesDocumentsByCustomerIdAsync(customerProfile.Id, "QUOTE");
 
             Quotes = quotes.Select(q => new QuoteViewModel
             {

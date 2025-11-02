@@ -2,16 +2,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.EVM
 {
     public class DealersModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDealerService _dealerService;
 
-        public DealersModel(ApplicationDbContext context)
+        public DealersModel(ApplicationDbContext context, IDealerService dealerService)
         {
             _context = context;
+            _dealerService = dealerService;
         }
 
         public int TotalDealers { get; set; }
@@ -30,7 +33,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM
             }
 
             // Get all dealers
-            var dealers = await _context.Dealers.ToListAsync();
+            var dealers = (await _dealerService.GetAllDealersAsync()).ToList();
 
             TotalDealers = dealers.Count;
             ActiveDealers = dealers.Count(d => d.Status == "ACTIVE");

@@ -2,16 +2,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Admin
 {
     public class DashboardModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDealerService _dealerService;
+        private readonly IStockService _stockService;
+        private readonly IVehicleService _vehicleService;
 
-        public DashboardModel(ApplicationDbContext context)
+        public DashboardModel(
+            ApplicationDbContext context,
+            IDealerService dealerService,
+            IStockService stockService,
+            IVehicleService vehicleService)
         {
             _context = context;
+            _dealerService = dealerService;
+            _stockService = stockService;
+            _vehicleService = vehicleService;
         }
 
         public string UserName { get; set; } = "";
@@ -49,11 +60,13 @@ namespace Vehicle_Dealer_Management.Pages.Admin
             ActiveUsers = 45;
 
             // Get dealers
-            TotalDealers = await _context.Dealers.CountAsync();
-            ActiveDealers = await _context.Dealers.CountAsync(d => d.Status == "ACTIVE");
+            var allDealers = (await _dealerService.GetAllDealersAsync()).ToList();
+            TotalDealers = allDealers.Count;
+            ActiveDealers = allDealers.Count(d => d.Status == "ACTIVE");
 
-            // Get total inventory
-            TotalInventory = (int)(await _context.Stocks.SumAsync(s => (int?)s.Qty) ?? 0);
+            // Get total inventory (EVM stock)
+            var evmStocks = (await _stockService.GetStocksByOwnerAsync("EVM", 0)).ToList();
+            TotalInventory = (int)evmStocks.Sum(s => (long)s.Qty);
 
             // Mock top dealers
             TopDealers = new List<DealerPerformanceViewModel>
@@ -75,19 +88,22 @@ namespace Vehicle_Dealer_Management.Pages.Admin
             };
 
             // Get low stock alerts (real data)
-            var lowStocks = await _context.Stocks
-                .Where(s => s.Qty < 10 && s.OwnerType == "EVM")
-                .Include(s => s.Vehicle)
+            var lowStocks = evmStocks
+                .Where(s => s.Qty < 10)
                 .OrderBy(s => s.Qty)
                 .Take(5)
-                .ToListAsync();
+                .ToList();
 
-            LowStockAlerts = lowStocks.Select(s => new StockAlertViewModel
+            LowStockAlerts = (await Task.WhenAll(lowStocks.Select(async s =>
             {
-                VehicleName = $"{s.Vehicle?.ModelName} {s.Vehicle?.VariantName}",
-                Color = s.ColorCode,
-                Qty = (int)s.Qty
-            }).ToList();
+                var vehicle = await _vehicleService.GetVehicleByIdAsync(s.VehicleId);
+                return new StockAlertViewModel
+                {
+                    VehicleName = vehicle != null ? $"{vehicle.ModelName} {vehicle.VariantName}" : "N/A",
+                    Color = s.ColorCode,
+                    Qty = (int)s.Qty
+                };
+            }))).ToList();
 
             return Page();
         }

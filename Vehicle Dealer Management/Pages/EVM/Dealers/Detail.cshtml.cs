@@ -2,16 +2,30 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.EVM.Dealers
 {
     public class DetailModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDealerService _dealerService;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IPaymentService _paymentService;
+        private readonly IStockService _stockService;
 
-        public DetailModel(ApplicationDbContext context)
+        public DetailModel(
+            ApplicationDbContext context,
+            IDealerService dealerService,
+            ISalesDocumentService salesDocumentService,
+            IPaymentService paymentService,
+            IStockService stockService)
         {
             _context = context;
+            _dealerService = dealerService;
+            _salesDocumentService = salesDocumentService;
+            _paymentService = paymentService;
+            _stockService = stockService;
         }
 
         public DealerDetailViewModel Dealer { get; set; } = null!;
@@ -29,7 +43,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Dealers
                 return RedirectToPage("/EVM/Dealers");
             }
 
-            var dealer = await _context.Dealers.FindAsync(id.Value);
+            var dealer = await _dealerService.GetDealerByIdAsync(id.Value);
             if (dealer == null)
             {
                 TempData["Error"] = "Không tìm thấy đại lý này.";
@@ -43,29 +57,24 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Dealers
                 .ToListAsync();
 
             // Get sales documents (orders) from this dealer
-            var orders = await _context.SalesDocuments
-                .Where(s => s.DealerId == id.Value && s.Type == "ORDER")
-                .Include(s => s.Customer)
-                .Include(s => s.Lines)
-                    .ThenInclude(l => l.Vehicle)
-                .Include(s => s.Payments)
+            var allOrders = (await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(id.Value))
+                .Where(s => s.Type == "ORDER")
+                .ToList();
+
+            var orders = allOrders
                 .OrderByDescending(s => s.CreatedAt)
                 .Take(10)
-                .ToListAsync();
-
-            // Calculate total sales (from ALL orders, not just recent 10)
-            var allOrders = await _context.SalesDocuments
-                .Where(s => s.DealerId == id.Value && s.Type == "ORDER")
-                .Include(s => s.Lines!)
-                .Include(s => s.Payments)
-                .ToListAsync();
+                .ToList();
 
             var totalSales = allOrders
                 .Sum(o => o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0);
 
             // Calculate total paid
-            var totalPaid = allOrders
-                .Sum(o => o.Payments?.Sum(p => p.Amount) ?? 0);
+            decimal totalPaid = 0;
+            foreach (var order in allOrders)
+            {
+                totalPaid += await _paymentService.GetTotalPaidAmountAsync(order.Id);
+            }
 
             // Calculate debt (outstanding amount)
             var totalDebt = totalSales - totalPaid;
@@ -75,16 +84,20 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Dealers
                 .CountAsync(u => u.DealerId == id.Value);
 
             // Get stock summary
-            var stockSummary = await _context.Stocks
-                .Where(s => s.OwnerType == "DEALER" && s.OwnerId == id.Value)
-                .Include(s => s.Vehicle)
+            var stocks = (await _stockService.GetStocksByOwnerAsync("DEALER", id.Value)).ToList();
+            var stockSummary = stocks
                 .GroupBy(s => s.VehicleId)
-                .Select(g => new StockSummaryViewModel
+                .Select(g =>
                 {
-                    VehicleName = g.First().Vehicle!.ModelName + " " + g.First().Vehicle.VariantName,
-                    TotalQty = (int)g.Sum(s => s.Qty)
+                    var firstStock = g.First();
+                    var vehicle = _context.Vehicles.Find(firstStock.VehicleId);
+                    return new StockSummaryViewModel
+                    {
+                        VehicleName = vehicle != null ? $"{vehicle.ModelName} {vehicle.VariantName}" : "N/A",
+                        TotalQty = (int)g.Sum(s => s.Qty)
+                    };
                 })
-                .ToListAsync();
+                .ToList();
 
             Dealer = new DealerDetailViewModel
             {
@@ -105,16 +118,21 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Dealers
                 DealerOrdersCount = dealerOrders.Count,
 
                 // Recent orders
-                RecentOrders = orders.Select(o => new OrderSummaryViewModel
+                RecentOrders = (await Task.WhenAll(orders.Select(async o =>
                 {
-                    Id = o.Id,
-                    OrderNumber = $"ORD-{o.Id:D6}",
-                    CustomerName = o.Customer?.FullName ?? "N/A",
-                    TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0,
-                    PaidAmount = o.Payments?.Sum(p => p.Amount) ?? 0,
-                    Status = o.Status,
-                    CreatedAt = o.CreatedAt
-                }).ToList(),
+                    var paidAmount = await _paymentService.GetTotalPaidAmountAsync(o.Id);
+                    var customer = await _context.CustomerProfiles.FindAsync(o.CustomerId);
+                    return new OrderSummaryViewModel
+                    {
+                        Id = o.Id,
+                        OrderNumber = $"ORD-{o.Id:D6}",
+                        CustomerName = customer?.FullName ?? "N/A",
+                        TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0,
+                        PaidAmount = paidAmount,
+                        Status = o.Status,
+                        CreatedAt = o.CreatedAt
+                    };
+                }))).ToList(),
 
                 // Stock summary
                 StockSummary = stockSummary

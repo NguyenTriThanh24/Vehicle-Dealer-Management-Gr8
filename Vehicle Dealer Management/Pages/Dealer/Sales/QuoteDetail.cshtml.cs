@@ -1,16 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 {
     public class QuoteDetailModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly ApplicationDbContext _context; // Cần cho SalesDocumentLine khi convert
 
-        public QuoteDetailModel(ApplicationDbContext context)
+        public QuoteDetailModel(
+            ISalesDocumentService salesDocumentService,
+            ApplicationDbContext context)
         {
+            _salesDocumentService = salesDocumentService;
             _context = context;
         }
 
@@ -30,17 +35,10 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 
             var dealerIdInt = int.Parse(dealerId);
 
-            // Get quote with all related data from DB
-            var quote = await _context.SalesDocuments
-                .Include(s => s.Customer)
-                .Include(s => s.Dealer)
-                .Include(s => s.Promotion)
-                .Include(s => s.CreatedByUser)
-                .Include(s => s.Lines!)
-                    .ThenInclude(l => l.Vehicle)
-                .FirstOrDefaultAsync(s => s.Id == id && s.DealerId == dealerIdInt && s.Type == "QUOTE");
+            // Get quote with all related data from Service
+            var quote = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
 
-            if (quote == null)
+            if (quote == null || quote.DealerId != dealerIdInt || quote.Type != "QUOTE")
             {
                 return NotFound();
             }

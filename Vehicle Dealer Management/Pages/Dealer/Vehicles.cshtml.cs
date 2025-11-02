@@ -1,18 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Vehicle_Dealer_Management.DAL.Data;
-using System.Text.Json;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer
 {
     public class VehiclesModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVehicleService _vehicleService;
+        private readonly IPricePolicyService _pricePolicyService;
+        private readonly IStockService _stockService;
 
-        public VehiclesModel(ApplicationDbContext context)
+        public VehiclesModel(
+            IVehicleService vehicleService,
+            IPricePolicyService pricePolicyService,
+            IStockService stockService)
         {
-            _context = context;
+            _vehicleService = vehicleService;
+            _pricePolicyService = pricePolicyService;
+            _stockService = stockService;
         }
 
         public List<VehicleViewModel> Vehicles { get; set; } = new();
@@ -26,27 +31,17 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             }
 
             // Get all vehicles with price policies and stocks
-            var vehicles = await _context.Vehicles
-                .Where(v => v.Status == "AVAILABLE")
-                .ToListAsync();
+            var vehicles = await _vehicleService.GetAvailableVehiclesAsync();
 
             var dealerIdInt = int.Parse(dealerId);
 
             foreach (var vehicle in vehicles)
             {
                 // Get price policy (dealer-specific or global)
-                var pricePolicy = await _context.PricePolicies
-                    .Where(p => p.VehicleId == vehicle.Id && 
-                                (p.DealerId == dealerIdInt || p.DealerId == null) &&
-                                p.ValidFrom <= DateTime.UtcNow &&
-                                (p.ValidTo == null || p.ValidTo >= DateTime.UtcNow))
-                    .OrderByDescending(p => p.DealerId) // Dealer-specific first
-                    .FirstOrDefaultAsync();
+                var pricePolicy = await _pricePolicyService.GetActivePricePolicyAsync(vehicle.Id, dealerIdInt);
 
                 // Get stock colors available at EVM (dealer can order from EVM)
-                var stocks = await _context.Stocks
-                    .Where(s => s.VehicleId == vehicle.Id && s.OwnerType == "EVM" && s.Qty > 0)
-                    .ToListAsync();
+                var stocks = await _stockService.GetAvailableStocksByVehicleIdAsync(vehicle.Id, "EVM");
 
                 Vehicles.Add(new VehicleViewModel
                 {

@@ -1,16 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class MyOrdersModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IPaymentService _paymentService;
+        private readonly ApplicationDbContext _context; // Cần cho CustomerProfile
 
-        public MyOrdersModel(ApplicationDbContext context)
+        public MyOrdersModel(
+            ISalesDocumentService salesDocumentService,
+            IPaymentService paymentService,
+            ApplicationDbContext context)
         {
+            _salesDocumentService = salesDocumentService;
+            _paymentService = paymentService;
             _context = context;
         }
 
@@ -33,26 +41,27 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 return Page();
             }
 
-            // Get orders
-            var orders = await _context.SalesDocuments
-                .Where(s => s.CustomerId == customerProfile.Id && s.Type == "ORDER")
-                .Include(s => s.Lines)
-                .Include(s => s.Payments)
-                .Include(s => s.Delivery)
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+            // Get orders using Service
+            var orders = await _salesDocumentService.GetSalesDocumentsByCustomerIdAsync(customerProfile.Id, "ORDER");
 
-            Orders = orders.Select(o => new OrderViewModel
+            var ordersList = new List<OrderViewModel>();
+            foreach (var o in orders)
             {
-                Id = o.Id,
-                CreatedAt = o.CreatedAt,
-                VehicleCount = (int)(o.Lines?.Sum(l => (decimal?)l.Qty) ?? 0),
-                TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0,
-                PaidAmount = o.Payments?.Sum(p => p.Amount) ?? 0,
-                RemainingAmount = (o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0) - (o.Payments?.Sum(p => p.Amount) ?? 0),
-                Status = o.Status,
-                DeliveryDate = o.Delivery?.ScheduledDate
-            }).ToList();
+                var totalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0;
+                var paidAmount = await _paymentService.GetTotalPaidAmountAsync(o.Id);
+                ordersList.Add(new OrderViewModel
+                {
+                    Id = o.Id,
+                    CreatedAt = o.CreatedAt,
+                    VehicleCount = (int)(o.Lines?.Sum(l => (decimal?)l.Qty) ?? 0),
+                    TotalAmount = totalAmount,
+                    PaidAmount = paidAmount,
+                    RemainingAmount = totalAmount - paidAmount,
+                    Status = o.Status,
+                    DeliveryDate = o.Delivery?.ScheduledDate
+                });
+            }
+            Orders = ordersList;
 
             return Page();
         }

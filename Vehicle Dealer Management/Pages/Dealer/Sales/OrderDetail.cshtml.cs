@@ -1,17 +1,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 {
     public class OrderDetailModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IPaymentService _paymentService;
+        private readonly IDeliveryService _deliveryService;
 
-        public OrderDetailModel(ApplicationDbContext context)
+        public OrderDetailModel(
+            ISalesDocumentService salesDocumentService,
+            IPaymentService paymentService,
+            IDeliveryService deliveryService)
         {
-            _context = context;
+            _salesDocumentService = salesDocumentService;
+            _paymentService = paymentService;
+            _deliveryService = deliveryService;
         }
 
         public OrderDetailViewModel Order { get; set; } = null!;
@@ -30,26 +36,17 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 
             var dealerIdInt = int.Parse(dealerId);
 
-            // Get order with all related data from DB
-            var order = await _context.SalesDocuments
-                .Include(s => s.Customer)
-                .Include(s => s.Dealer)
-                .Include(s => s.Promotion)
-                .Include(s => s.CreatedByUser)
-                .Include(s => s.Lines!)
-                    .ThenInclude(l => l.Vehicle)
-                .Include(s => s.Payments)
-                .Include(s => s.Delivery)
-                .FirstOrDefaultAsync(s => s.Id == id && s.DealerId == dealerIdInt && s.Type == "ORDER");
+            // Get order with all related data from Service
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
 
-            if (order == null)
+            if (order == null || order.DealerId != dealerIdInt || order.Type != "ORDER")
             {
                 return NotFound();
             }
 
             // Calculate totals from real data
             var totalAmount = order.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0;
-            var paidAmount = order.Payments?.Sum(p => p.Amount) ?? 0;
+            var paidAmount = await _paymentService.GetTotalPaidAmountAsync(order.Id);
             var remainingAmount = totalAmount - paidAmount;
 
             Order = new OrderDetailViewModel
@@ -135,11 +132,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             var dealerIdInt = int.Parse(dealerId);
 
             // Get order
-            var order = await _context.SalesDocuments
-                .Include(s => s.Payments)
-                .FirstOrDefaultAsync(s => s.Id == id && s.DealerId == dealerIdInt && s.Type == "ORDER");
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
 
-            if (order == null)
+            if (order == null || order.DealerId != dealerIdInt || order.Type != "ORDER")
             {
                 return NotFound();
             }
@@ -153,7 +148,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 
             // Calculate remaining amount
             var totalAmount = order.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0;
-            var paidAmount = order.Payments?.Sum(p => p.Amount) ?? 0;
+            var paidAmount = await _paymentService.GetTotalPaidAmountAsync(order.Id);
             var remainingAmount = totalAmount - paidAmount;
 
             if (amount > remainingAmount)
@@ -162,27 +157,8 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 return RedirectToPage(new { id });
             }
 
-            // Create payment
-            var payment = new Vehicle_Dealer_Management.DAL.Models.Payment
-            {
-                SalesDocumentId = order.Id,
-                Method = method ?? "CASH",
-                Amount = amount,
-                MetaJson = metaJson,
-                PaidAt = DateTime.UtcNow
-            };
-
-            _context.Payments.Add(payment);
-
-            // Update order status if fully paid
-            var newPaidAmount = paidAmount + amount;
-            if (newPaidAmount >= totalAmount && order.Status == "OPEN")
-            {
-                order.Status = "PAID";
-                order.UpdatedAt = DateTime.UtcNow;
-            }
-
-            await _context.SaveChangesAsync();
+            // Create payment using Service (auto-updates order status)
+            await _paymentService.CreatePaymentAsync(order.Id, method ?? "CASH", amount, metaJson);
 
             TempData["Success"] = "Thêm thanh toán thành công!";
             return RedirectToPage(new { id });
@@ -199,11 +175,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             var dealerIdInt = int.Parse(dealerId);
 
             // Get order
-            var order = await _context.SalesDocuments
-                .Include(s => s.Delivery)
-                .FirstOrDefaultAsync(s => s.Id == id && s.DealerId == dealerIdInt && s.Type == "ORDER");
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
 
-            if (order == null)
+            if (order == null || order.DealerId != dealerIdInt || order.Type != "ORDER")
             {
                 return NotFound();
             }
@@ -226,26 +200,8 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 return RedirectToPage(new { id });
             }
 
-            // Create or update delivery
-            if (order.Delivery == null)
-            {
-                order.Delivery = new Vehicle_Dealer_Management.DAL.Models.Delivery
-                {
-                    SalesDocumentId = order.Id,
-                    ScheduledDate = scheduledDateTime,
-                    Status = "SCHEDULED",
-                    CreatedDate = DateTime.UtcNow
-                };
-                _context.Deliveries.Add(order.Delivery);
-            }
-            else
-            {
-                order.Delivery.ScheduledDate = scheduledDateTime;
-                order.Delivery.Status = "SCHEDULED";
-            }
-
-            order.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            // Create or update delivery using Service (auto-updates order status)
+            await _deliveryService.CreateOrUpdateDeliveryAsync(order.Id, scheduledDateTime);
 
             TempData["Success"] = "Lên lịch giao xe thành công!";
             return RedirectToPage(new { id });
@@ -262,28 +218,22 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             var dealerIdInt = int.Parse(dealerId);
 
             // Get order with delivery
-            var order = await _context.SalesDocuments
-                .Include(s => s.Delivery)
-                .FirstOrDefaultAsync(s => s.Id == id && s.DealerId == dealerIdInt && s.Type == "ORDER");
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
 
-            if (order == null || order.Delivery == null)
+            if (order == null || order.DealerId != dealerIdInt || order.Type != "ORDER")
             {
                 return NotFound();
             }
 
-            // Mark as delivered
-            order.Delivery.DeliveredDate = DateTime.UtcNow;
-            order.Delivery.Status = "DELIVERED";
-            order.Delivery.HandoverNote = handoverNote;
-
-            // Update order status if not already delivered
-            if (order.Status != "DELIVERED")
+            var delivery = await _deliveryService.GetDeliveryBySalesDocumentIdAsync(order.Id);
+            if (delivery == null)
             {
-                order.Status = "DELIVERED";
-                order.UpdatedAt = DateTime.UtcNow;
+                TempData["Error"] = "Chưa có lịch giao xe. Vui lòng lên lịch giao trước.";
+                return RedirectToPage(new { id });
             }
 
-            await _context.SaveChangesAsync();
+            // Mark as delivered using Service (auto-updates order status)
+            await _deliveryService.MarkDeliveryAsDeliveredAsync(delivery.Id, DateTime.UtcNow, handoverNote);
 
             TempData["Success"] = "Xác nhận giao xe thành công!";
             return RedirectToPage(new { id });

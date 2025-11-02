@@ -4,16 +4,27 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Models;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 {
     public class EditQuoteModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IVehicleService _vehicleService;
+        private readonly IPricePolicyService _pricePolicyService;
 
-        public EditQuoteModel(ApplicationDbContext context)
+        public EditQuoteModel(
+            ApplicationDbContext context,
+            ISalesDocumentService salesDocumentService,
+            IVehicleService vehicleService,
+            IPricePolicyService pricePolicyService)
         {
             _context = context;
+            _salesDocumentService = salesDocumentService;
+            _vehicleService = vehicleService;
+            _pricePolicyService = pricePolicyService;
         }
 
         public List<CustomerViewModel> Customers { get; set; } = new();
@@ -47,19 +58,11 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 .ToListAsync();
 
             // Load available vehicles
-            var vehicles = await _context.Vehicles
-                .Where(v => v.Status == "AVAILABLE")
-                .ToListAsync();
+            var vehicles = await _vehicleService.GetAvailableVehiclesAsync();
 
             foreach (var vehicle in vehicles)
             {
-                var pricePolicy = await _context.PricePolicies
-                    .Where(p => p.VehicleId == vehicle.Id &&
-                                (p.DealerId == dealerIdInt || p.DealerId == null) &&
-                                p.ValidFrom <= DateTime.UtcNow &&
-                                (p.ValidTo == null || p.ValidTo >= DateTime.UtcNow))
-                    .OrderByDescending(p => p.DealerId)
-                    .FirstOrDefaultAsync();
+                var pricePolicy = await _pricePolicyService.GetActivePricePolicyAsync(vehicle.Id, dealerIdInt);
 
                 Vehicles.Add(new VehicleViewModel
                 {
@@ -85,14 +88,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             if (id.HasValue)
             {
                 QuoteId = id.Value;
-                var quote = await _context.SalesDocuments
-                    .Include(s => s.Lines!)
-                        .ThenInclude(l => l.Vehicle)
-                    .FirstOrDefaultAsync(s => s.Id == id.Value && 
-                                              s.DealerId == dealerIdInt && 
-                                              s.Type == "QUOTE");
+                var quote = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id.Value);
 
-                if (quote == null)
+                if (quote == null || quote.DealerId != dealerIdInt || quote.Type != "QUOTE")
                 {
                     TempData["Error"] = "Không tìm thấy báo giá này.";
                     return RedirectToPage("/Dealer/Sales/Quotes");
@@ -147,13 +145,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             }
 
             // Get existing quote
-            var quote = await _context.SalesDocuments
-                .Include(s => s.Lines)
-                .FirstOrDefaultAsync(s => s.Id == quoteId.Value && 
-                                          s.DealerId == dealerIdInt && 
-                                          s.Type == "QUOTE");
+            var quote = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(quoteId.Value);
 
-            if (quote == null)
+            if (quote == null || quote.DealerId != dealerIdInt || quote.Type != "QUOTE")
             {
                 TempData["Error"] = "Không tìm thấy báo giá này.";
                 return RedirectToPage("/Dealer/Sales/Quotes");
@@ -173,14 +167,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             quote.UpdatedAt = DateTime.UtcNow;
 
             // Get price
-            var pricePolicy = await _context.PricePolicies
-                .Where(p => p.VehicleId == vehicleId &&
-                            (p.DealerId == dealerIdInt || p.DealerId == null) &&
-                            p.ValidFrom <= DateTime.UtcNow &&
-                            (p.ValidTo == null || p.ValidTo >= DateTime.UtcNow))
-                .OrderByDescending(p => p.DealerId)
-                .FirstOrDefaultAsync();
-
+            var pricePolicy = await _pricePolicyService.GetActivePricePolicyAsync(vehicleId, dealerIdInt);
             var unitPrice = pricePolicy?.Msrp ?? 0;
 
             // For simplicity, we'll replace all existing lines with the new one

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Models;
 
@@ -8,10 +9,20 @@ namespace Vehicle_Dealer_Management.Pages.EVM
 {
     public class StocksModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IStockService _stockService;
+        private readonly IVehicleService _vehicleService;
+        private readonly IPricePolicyService _pricePolicyService;
+        private readonly ApplicationDbContext _context; // Tạm thời cần cho complex queries
 
-        public StocksModel(ApplicationDbContext context)
+        public StocksModel(
+            IStockService stockService,
+            IVehicleService vehicleService,
+            IPricePolicyService pricePolicyService,
+            ApplicationDbContext context)
         {
+            _stockService = stockService;
+            _vehicleService = vehicleService;
+            _pricePolicyService = pricePolicyService;
             _context = context;
         }
 
@@ -31,7 +42,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM
                 return RedirectToPage("/Auth/Login");
             }
 
-            // Get all stocks
+            // Get all stocks (cần include Vehicle để map ViewModel)
             var stocks = await _context.Stocks
                 .Include(s => s.Vehicle)
                 .OrderByDescending(s => s.CreatedDate)
@@ -41,13 +52,12 @@ namespace Vehicle_Dealer_Management.Pages.EVM
             var dealers = await _context.Dealers.ToDictionaryAsync(d => d.Id, d => d.Name);
 
             // Get vehicles for add form
-            Vehicles = await _context.Vehicles
-                .Select(v => new VehicleSimple
-                {
-                    Id = v.Id,
-                    Name = v.ModelName + " " + v.VariantName
-                })
-                .ToListAsync();
+            var allVehicles = await _vehicleService.GetAllVehiclesAsync();
+            Vehicles = allVehicles.Select(v => new VehicleSimple
+            {
+                Id = v.Id,
+                Name = v.ModelName + " " + v.VariantName
+            }).ToList();
 
             // Calculate totals
             TotalEvmStock = (int)stocks.Where(s => s.OwnerType == "EVM").Sum(s => s.Qty);
@@ -83,37 +93,36 @@ namespace Vehicle_Dealer_Management.Pages.EVM
 
         public async Task<IActionResult> OnPostAddStockAsync(int vehicleId, string color, int quantity)
         {
-            // Check if stock already exists
-            var existingStock = await _context.Stocks
-                .FirstOrDefaultAsync(s => s.OwnerType == "EVM" && 
-                                         s.OwnerId == 0 && 
-                                         s.VehicleId == vehicleId && 
-                                         s.ColorCode == color);
-
-            if (existingStock != null)
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
             {
-                // Update quantity
-                existingStock.Qty += quantity;
-                existingStock.CreatedDate = DateTime.UtcNow;
+                return RedirectToPage("/Auth/Login");
             }
-            else
+
+            try
             {
-                // Create new stock
-                var stock = new Stock
+                // Check if stock already exists
+                var existingStock = await _stockService.GetStockByOwnerAndVehicleAsync("EVM", 0, vehicleId, color);
+
+                if (existingStock != null)
                 {
-                    OwnerType = "EVM",
-                    OwnerId = 0,
-                    VehicleId = vehicleId,
-                    ColorCode = color,
-                    Qty = quantity,
-                    CreatedDate = DateTime.UtcNow
-                };
-                _context.Stocks.Add(stock);
+                    // Update quantity (add to existing)
+                    var newQty = existingStock.Qty + quantity;
+                    await _stockService.UpdateStockQtyAsync(existingStock.Id, newQty);
+                }
+                else
+                {
+                    // Create new stock using Service
+                    await _stockService.CreateOrUpdateStockAsync("EVM", 0, vehicleId, color, quantity);
+                }
+
+                TempData["Success"] = "Nhập kho thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi: {ex.Message}";
             }
 
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Nhập kho thành công!";
             return RedirectToPage();
         }
 
@@ -125,30 +134,25 @@ namespace Vehicle_Dealer_Management.Pages.EVM
                 return RedirectToPage("/Auth/Login");
             }
 
-            // Validate quantity
-            if (newQuantity < 0)
+            try
             {
-                TempData["Error"] = "Số lượng không được âm.";
-                return RedirectToPage();
+                // Validate quantity
+                if (newQuantity < 0)
+                {
+                    TempData["Error"] = "Số lượng không được âm.";
+                    return RedirectToPage();
+                }
+
+                // Update quantity using Service
+                await _stockService.UpdateStockQtyAsync(stockId, newQuantity);
+
+                TempData["Success"] = "Cập nhật số lượng tồn kho thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi: {ex.Message}";
             }
 
-            // Get stock
-            var stock = await _context.Stocks
-                .FirstOrDefaultAsync(s => s.Id == stockId && s.OwnerType == "EVM");
-
-            if (stock == null)
-            {
-                TempData["Error"] = "Không tìm thấy tồn kho này.";
-                return RedirectToPage();
-            }
-
-            // Update quantity
-            stock.Qty = newQuantity;
-            stock.CreatedDate = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Cập nhật số lượng tồn kho thành công!";
             return RedirectToPage();
         }
 

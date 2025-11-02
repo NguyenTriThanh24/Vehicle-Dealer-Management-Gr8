@@ -1,32 +1,28 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class VehiclesModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVehicleService _vehicleService;
+        private readonly IPricePolicyService _pricePolicyService;
 
-        public VehiclesModel(ApplicationDbContext context)
+        public VehiclesModel(IVehicleService vehicleService, IPricePolicyService pricePolicyService)
         {
-            _context = context;
+            _vehicleService = vehicleService;
+            _pricePolicyService = pricePolicyService;
         }
 
         public List<VehicleViewModel> Vehicles { get; set; } = new();
 
         public async Task OnGetAsync()
         {
-            var vehicles = await _context.Vehicles
-                .Where(v => v.Status == "AVAILABLE")
-                .ToListAsync();
+            var vehicles = await _vehicleService.GetAvailableVehiclesAsync();
 
             foreach (var vehicle in vehicles)
             {
-                var price = await _context.PricePolicies
-                    .Where(p => p.VehicleId == vehicle.Id && p.DealerId == null)
-                    .OrderByDescending(p => p.ValidFrom)
-                    .FirstOrDefaultAsync();
+                var pricePolicy = await _pricePolicyService.GetActivePricePolicyAsync(vehicle.Id, null);
 
                 Vehicles.Add(new VehicleViewModel
                 {
@@ -35,7 +31,7 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                     Variant = vehicle.VariantName,
                     ImageUrl = vehicle.ImageUrl,
                     Description = "Xe điện hiện đại, tiết kiệm năng lượng",
-                    Price = price?.Msrp ?? 0
+                    Price = pricePolicy?.Msrp ?? 0
                 });
             }
         }

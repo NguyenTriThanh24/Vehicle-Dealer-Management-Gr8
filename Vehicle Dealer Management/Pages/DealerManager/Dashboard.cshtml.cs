@@ -2,16 +2,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.DealerManager
 {
     public class DashboardModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IPaymentService _paymentService;
 
-        public DashboardModel(ApplicationDbContext context)
+        public DashboardModel(
+            ApplicationDbContext context,
+            ISalesDocumentService salesDocumentService,
+            IPaymentService paymentService)
         {
             _context = context;
+            _salesDocumentService = salesDocumentService;
+            _paymentService = paymentService;
         }
 
         public string UserName { get; set; } = "";
@@ -49,12 +57,33 @@ namespace Vehicle_Dealer_Management.Pages.DealerManager
 
             var dealerIdInt = int.Parse(dealerId);
 
-            // Mock data for statistics
-            MonthSales = 3500000000; // 3.5 billion
-            TotalOrders = 42;
-            TotalStaff = 8;
-            ActiveStaff = 7;
-            TotalDebt = 250000000; // 250 million
+            // Get real data for statistics
+            var allOrders = (await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(dealerIdInt, "ORDER", null)).ToList();
+            
+            // Calculate month sales
+            var monthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            var monthOrders = allOrders.Where(o => o.CreatedAt >= monthStart).ToList();
+            MonthSales = monthOrders.Sum(o => o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0);
+            
+            TotalOrders = allOrders.Count;
+            
+            // Get staff count
+            TotalStaff = await _context.Users.CountAsync(u => u.DealerId == dealerIdInt);
+            ActiveStaff = TotalStaff; // Assuming all staff are active (User model may not have IsActive property)
+            
+            // Calculate total debt (orders not fully paid)
+            decimal totalDebt = 0;
+            foreach (var order in allOrders)
+            {
+                var totalAmount = order.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0;
+                var paidAmount = await _paymentService.GetTotalPaidAmountAsync(order.Id);
+                var remaining = totalAmount - paidAmount;
+                if (remaining > 0)
+                {
+                    totalDebt += remaining;
+                }
+            }
+            TotalDebt = totalDebt;
 
             // Mock staff performance
             StaffPerformance = new List<StaffPerformanceViewModel>

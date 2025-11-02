@@ -2,16 +2,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.EVM
 {
     public class DealerOrdersModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDealerService _dealerService;
 
-        public DealerOrdersModel(ApplicationDbContext context)
+        public DealerOrdersModel(
+            ApplicationDbContext context,
+            IDealerService dealerService)
         {
             _context = context;
+            _dealerService = dealerService;
         }
 
         public string StatusFilter { get; set; } = "SUBMITTED";

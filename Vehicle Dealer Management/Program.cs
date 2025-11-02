@@ -27,12 +27,22 @@ builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<ISaleRepository, SaleRepository>();
 builder.Services.AddScoped<IDealerRepository, DealerRepository>();
+builder.Services.AddScoped<IPricePolicyRepository, PricePolicyRepository>();
+builder.Services.AddScoped<IStockRepository, StockRepository>();
+builder.Services.AddScoped<ISalesDocumentRepository, SalesDocumentRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
 
 // Register Services (BLL Layer)
 builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddScoped<ISaleService, SaleService>();
 builder.Services.AddScoped<IDealerService, DealerService>();
+builder.Services.AddScoped<IPricePolicyService, PricePolicyService>();
+builder.Services.AddScoped<IStockService, StockService>();
+builder.Services.AddScoped<ISalesDocumentService, SalesDocumentService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 
 var app = builder.Build();
 

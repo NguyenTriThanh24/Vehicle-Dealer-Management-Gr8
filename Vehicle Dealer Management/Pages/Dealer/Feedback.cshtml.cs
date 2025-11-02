@@ -2,16 +2,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer
 {
     public class FeedbackModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICustomerService _customerService;
 
-        public FeedbackModel(ApplicationDbContext context)
+        public FeedbackModel(ApplicationDbContext context, ICustomerService customerService)
         {
             _context = context;
+            _customerService = customerService;
         }
 
         public string TypeFilter { get; set; } = "all";
@@ -53,15 +56,22 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             InProgressCount = feedbacks.Count(f => f.Status == "IN_PROGRESS");
             ResolvedCount = feedbacks.Count(f => f.Status == "RESOLVED");
 
-            Feedbacks = feedbacks.Select(f => new FeedbackViewModel
+            Feedbacks = (await Task.WhenAll(feedbacks.Select(async f =>
             {
-                Id = f.Id,
-                CustomerName = f.Customer?.FullName ?? "N/A",
-                Type = f.Type,
-                Status = f.Status,
-                Content = f.Content,
-                CreatedAt = f.CreatedAt
-            }).ToList();
+                var customer = f.CustomerId > 0 
+                    ? await _customerService.GetCustomerByIdAsync(f.CustomerId) 
+                    : null;
+                
+                return new FeedbackViewModel
+                {
+                    Id = f.Id,
+                    CustomerName = customer?.FullName ?? "N/A",
+                    Type = f.Type,
+                    Status = f.Status,
+                    Content = f.Content,
+                    CreatedAt = f.CreatedAt
+                };
+            }))).ToList();
 
             return Page();
         }

@@ -2,16 +2,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Admin
 {
     public class UsersModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDealerService _dealerService;
 
-        public UsersModel(ApplicationDbContext context)
+        public UsersModel(ApplicationDbContext context, IDealerService dealerService)
         {
             _context = context;
+            _dealerService = dealerService;
         }
 
         public int TotalUsers { get; set; }
@@ -38,9 +41,8 @@ namespace Vehicle_Dealer_Management.Pages.Admin
                 .ToListAsync();
 
             // Get all dealers
-            AllDealers = await _context.Dealers
-                .Select(d => d.Name)
-                .ToListAsync();
+            var dealers = await _dealerService.GetAllDealersAsync();
+            AllDealers = dealers.Select(d => d.Name).ToList();
 
             // Get all users
             var users = await _context.Users

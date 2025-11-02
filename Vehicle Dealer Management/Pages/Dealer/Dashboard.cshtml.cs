@@ -2,16 +2,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer
 {
     public class DashboardModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly ICustomerService _customerService;
 
-        public DashboardModel(ApplicationDbContext context)
+        public DashboardModel(
+            ApplicationDbContext context,
+            ISalesDocumentService salesDocumentService,
+            ICustomerService customerService)
         {
             _context = context;
+            _salesDocumentService = salesDocumentService;
+            _customerService = customerService;
         }
 
         public string UserName { get; set; } = "";
@@ -51,38 +59,39 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
 
             var dealerIdInt = int.Parse(dealerId);
 
-            // Get statistics
-            var allOrders = await _context.SalesDocuments
-                .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
-                .ToListAsync();
+            // Get statistics using services
+            var allOrders = (await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(dealerIdInt, "ORDER", null)).ToList();
 
             TotalOrders = allOrders.Count;
             PendingOrders = allOrders.Count(o => o.Status == "OPEN" || o.Status == "PENDING");
-            TodaySales = 125000000; // Mock data
+            
+            // Calculate today sales
+            var todayOrders = allOrders.Where(o => o.CreatedAt.Date == DateTime.UtcNow.Date).ToList();
+            TodaySales = todayOrders.Sum(o => o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0);
 
-            var allQuotes = await _context.SalesDocuments
-                .Where(s => s.DealerId == dealerIdInt && s.Type == "QUOTE")
-                .ToListAsync();
+            var allQuotes = (await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(dealerIdInt, "QUOTE", null)).ToList();
 
             TotalQuotes = allQuotes.Count;
             PendingQuotes = allQuotes.Count(q => q.Status == "DRAFT");
 
             // Get recent orders
-            var recentOrders = await _context.SalesDocuments
-                .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
-                .Include(s => s.Customer)
+            var recentOrders = allOrders
                 .OrderByDescending(s => s.CreatedAt)
                 .Take(5)
-                .ToListAsync();
+                .ToList();
 
-            RecentOrders = recentOrders.Select(o => new OrderViewModel
+            RecentOrders = (await Task.WhenAll(recentOrders.Select(async o =>
             {
-                Id = o.Id,
-                CustomerName = o.Customer?.FullName ?? "N/A",
-                CreatedAt = o.CreatedAt,
-                Status = o.Status,
-                TotalAmount = 1500000000 // Mock
-            }).ToList();
+                var customer = await _customerService.GetCustomerByIdAsync(o.CustomerId);
+                return new OrderViewModel
+                {
+                    Id = o.Id,
+                    CustomerName = customer?.FullName ?? "N/A",
+                    CreatedAt = o.CreatedAt,
+                    Status = o.Status,
+                    TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0
+                };
+            }))).ToList();
 
             // Get today's test drives
             var today = DateTime.Today;
@@ -103,22 +112,26 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             }).ToList();
 
             // Get pending quotes
-            var pendingQuotes = await _context.SalesDocuments
-                .Where(s => s.DealerId == dealerIdInt && s.Type == "QUOTE" && s.Status == "DRAFT")
-                .Include(s => s.Customer)
+            var pendingQuotes = allQuotes
+                .Where(q => q.Status == "DRAFT")
                 .OrderByDescending(s => s.CreatedAt)
                 .Take(5)
-                .ToListAsync();
+                .ToList();
 
-            PendingQuotesList = pendingQuotes.Select(q => new QuoteViewModel
+            PendingQuotesList = (await Task.WhenAll(pendingQuotes.Select(async q =>
             {
-                Id = q.Id,
-                CustomerName = q.Customer?.FullName ?? "N/A",
-                CreatedAt = q.CreatedAt
-            }).ToList();
+                var customer = await _customerService.GetCustomerByIdAsync(q.CustomerId);
+                return new QuoteViewModel
+                {
+                    Id = q.Id,
+                    CustomerName = customer?.FullName ?? "N/A",
+                    CreatedAt = q.CreatedAt
+                };
+            }))).ToList();
 
-            // Mock total customers
-            TotalCustomers = 156;
+            // Get total unique customers
+            var uniqueCustomerIds = allOrders.Select(o => o.CustomerId).Union(allQuotes.Select(q => q.CustomerId)).Distinct();
+            TotalCustomers = uniqueCustomerIds.Count();
 
             return Page();
         }

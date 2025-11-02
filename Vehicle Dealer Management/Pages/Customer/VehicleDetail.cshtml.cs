@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 using System.Text.Json;
 
@@ -8,10 +9,20 @@ namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class VehicleDetailModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVehicleService _vehicleService;
+        private readonly IPricePolicyService _pricePolicyService;
+        private readonly IDealerService _dealerService;
+        private readonly ApplicationDbContext _context; // Tạm thời cần cho Dealers query
 
-        public VehicleDetailModel(ApplicationDbContext context)
+        public VehicleDetailModel(
+            IVehicleService vehicleService,
+            IPricePolicyService pricePolicyService,
+            IDealerService dealerService,
+            ApplicationDbContext context)
         {
+            _vehicleService = vehicleService;
+            _pricePolicyService = pricePolicyService;
+            _dealerService = dealerService;
             _context = context;
         }
 
@@ -19,22 +30,16 @@ namespace Vehicle_Dealer_Management.Pages.Customer
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            // Get vehicle with all related data from DB
-            var vehicle = await _context.Vehicles
-                .FirstOrDefaultAsync(v => v.Id == id && v.Status == "AVAILABLE");
+            // Get vehicle from Service
+            var vehicle = await _vehicleService.GetVehicleByIdAsync(id);
 
-            if (vehicle == null)
+            if (vehicle == null || vehicle.Status != "AVAILABLE")
             {
                 return NotFound();
             }
 
             // Get price policy (MSRP - customer sees retail price)
-            var pricePolicy = await _context.PricePolicies
-                .Where(p => p.VehicleId == vehicle.Id && p.DealerId == null &&
-                            p.ValidFrom <= DateTime.UtcNow &&
-                            (p.ValidTo == null || p.ValidTo >= DateTime.UtcNow))
-                .OrderByDescending(p => p.ValidFrom)
-                .FirstOrDefaultAsync();
+            var pricePolicy = await _pricePolicyService.GetActivePricePolicyAsync(vehicle.Id, null);
 
             // Get all dealers for test drive booking
             var dealers = await _context.Dealers

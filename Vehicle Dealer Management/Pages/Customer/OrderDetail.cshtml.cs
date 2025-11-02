@@ -2,16 +2,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class OrderDetailModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IPaymentService _paymentService;
+        private readonly IDeliveryService _deliveryService;
 
-        public OrderDetailModel(ApplicationDbContext context)
+        public OrderDetailModel(
+            ApplicationDbContext context,
+            ISalesDocumentService salesDocumentService,
+            IPaymentService paymentService,
+            IDeliveryService deliveryService)
         {
             _context = context;
+            _salesDocumentService = salesDocumentService;
+            _paymentService = paymentService;
+            _deliveryService = deliveryService;
         }
 
         public OrderDetailViewModel Order { get; set; } = null!;
@@ -39,25 +50,20 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             }
 
             // Get order with all related data from DB - only orders belonging to this customer
-            var order = await _context.SalesDocuments
-                .Include(s => s.Customer)
-                .Include(s => s.Dealer)
-                .Include(s => s.Promotion)
-                .Include(s => s.Lines!)
-                    .ThenInclude(l => l.Vehicle)
-                .Include(s => s.Payments)
-                .Include(s => s.Delivery)
-                .FirstOrDefaultAsync(s => s.Id == id && s.CustomerId == customer.Id && s.Type == "ORDER");
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
 
-            if (order == null)
+            if (order == null || order.CustomerId != customer.Id || order.Type != "ORDER")
             {
                 return NotFound();
             }
 
             // Calculate totals from real data
             var totalAmount = order.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0;
-            var paidAmount = order.Payments?.Sum(p => p.Amount) ?? 0;
+            var paidAmount = await _paymentService.GetTotalPaidAmountAsync(id);
             var remainingAmount = totalAmount - paidAmount;
+
+            // Get delivery info
+            var delivery = await _deliveryService.GetDeliveryBySalesDocumentIdAsync(id);
 
             Order = new OrderDetailViewModel
             {
@@ -90,20 +96,22 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 }).ToList() ?? new List<OrderItemViewModel>(),
 
                 // Payments
-                Payments = order.Payments?.OrderByDescending(p => p.PaidAt).Select(p => new PaymentViewModel
-                {
-                    Method = p.Method,
-                    Amount = p.Amount,
-                    PaidAt = p.PaidAt
-                }).ToList() ?? new List<PaymentViewModel>(),
+                Payments = (await _paymentService.GetPaymentsBySalesDocumentIdAsync(id))
+                    .OrderByDescending(p => p.PaidAt)
+                    .Select(p => new PaymentViewModel
+                    {
+                        Method = p.Method,
+                        Amount = p.Amount,
+                        PaidAt = p.PaidAt
+                    }).ToList(),
 
                 // Delivery
-                Delivery = order.Delivery != null ? new DeliveryViewModel
+                Delivery = delivery != null ? new DeliveryViewModel
                 {
-                    ScheduledDate = order.Delivery.ScheduledDate,
-                    DeliveredDate = order.Delivery.DeliveredDate,
-                    Status = order.Delivery.Status,
-                    HandoverNote = order.Delivery.HandoverNote
+                    ScheduledDate = delivery.ScheduledDate,
+                    DeliveredDate = delivery.DeliveredDate,
+                    Status = delivery.Status,
+                    HandoverNote = delivery.HandoverNote
                 } : null,
 
                 // Totals

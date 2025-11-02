@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Models;
+using Vehicle_Dealer_Management.BLL.IService;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -11,10 +12,12 @@ namespace Vehicle_Dealer_Management.Pages.Auth
     public class RegisterModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICustomerService _customerService;
 
-        public RegisterModel(ApplicationDbContext context)
+        public RegisterModel(ApplicationDbContext context, ICustomerService customerService)
         {
             _context = context;
+            _customerService = customerService;
         }
 
         [BindProperty]
@@ -92,7 +95,7 @@ namespace Vehicle_Dealer_Management.Pages.Auth
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Create customer profile
+            // Create customer profile - use CustomerService if available
             var customerProfile = new CustomerProfile
             {
                 UserId = user.Id,
@@ -103,6 +106,8 @@ namespace Vehicle_Dealer_Management.Pages.Auth
                 CreatedDate = DateTime.UtcNow
             };
 
+            // Note: CustomerService works with Customer model, not CustomerProfile
+            // So we'll still use _context for CustomerProfile
             _context.CustomerProfiles.Add(customerProfile);
             await _context.SaveChangesAsync();
 

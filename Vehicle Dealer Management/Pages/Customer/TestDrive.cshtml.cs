@@ -2,16 +2,24 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
     public class TestDriveModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IDealerService _dealerService;
+        private readonly IVehicleService _vehicleService;
 
-        public TestDriveModel(ApplicationDbContext context)
+        public TestDriveModel(
+            ApplicationDbContext context,
+            IDealerService dealerService,
+            IVehicleService vehicleService)
         {
             _context = context;
+            _dealerService = dealerService;
+            _vehicleService = vehicleService;
         }
 
         public List<TestDriveViewModel> TestDrives { get; set; } = new();
@@ -33,24 +41,20 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             }
 
             // Get all dealers and vehicles for booking form
-            AllDealers = await _context.Dealers
-                .Where(d => d.Status == "ACTIVE")
-                .Select(d => new DealerSimple
-                {
-                    Id = d.Id,
-                    Name = d.Name,
-                    Address = d.Address
-                })
-                .ToListAsync();
+            var activeDealers = await _dealerService.GetActiveDealersAsync();
+            AllDealers = activeDealers.Select(d => new DealerSimple
+            {
+                Id = d.Id,
+                Name = d.Name,
+                Address = d.Address
+            }).ToList();
 
-            AllVehicles = await _context.Vehicles
-                .Where(v => v.Status == "AVAILABLE")
-                .Select(v => new VehicleSimple
-                {
-                    Id = v.Id,
-                    Name = v.ModelName + " " + v.VariantName
-                })
-                .ToListAsync();
+            var availableVehicles = await _vehicleService.GetAvailableVehiclesAsync();
+            AllVehicles = availableVehicles.Select(v => new VehicleSimple
+            {
+                Id = v.Id,
+                Name = v.ModelName + " " + v.VariantName
+            }).ToList();
 
             var customerProfile = await _context.CustomerProfiles
                 .FirstOrDefaultAsync(c => c.UserId == user.Id);
@@ -133,20 +137,16 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             }
 
             // Validate dealer exists and is active
-            var dealer = await _context.Dealers
-                .FirstOrDefaultAsync(d => d.Id == dealerId && d.Status == "ACTIVE");
-
-            if (dealer == null)
+            var dealer = await _dealerService.GetDealerByIdAsync(dealerId);
+            if (dealer == null || dealer.Status != "ACTIVE")
             {
                 TempData["Error"] = "Đại lý không tồn tại hoặc không hoạt động.";
                 return RedirectToPage();
             }
 
             // Validate vehicle exists and is available
-            var vehicle = await _context.Vehicles
-                .FirstOrDefaultAsync(v => v.Id == vehicleId && v.Status == "AVAILABLE");
-
-            if (vehicle == null)
+            var vehicle = await _vehicleService.GetVehicleByIdAsync(vehicleId);
+            if (vehicle == null || vehicle.Status != "AVAILABLE")
             {
                 TempData["Error"] = "Mẫu xe không tồn tại hoặc không có sẵn.";
                 return RedirectToPage();

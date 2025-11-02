@@ -1,17 +1,20 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 {
     public class OrdersModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly IPaymentService _paymentService;
 
-        public OrdersModel(ApplicationDbContext context)
+        public OrdersModel(
+            ISalesDocumentService salesDocumentService,
+            IPaymentService paymentService)
         {
-            _context = context;
+            _salesDocumentService = salesDocumentService;
+            _paymentService = paymentService;
         }
 
         public string StatusFilter { get; set; } = "all";
@@ -37,44 +40,39 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             StatusFilter = status ?? "all";
             var dealerIdInt = int.Parse(dealerId);
 
-            // Get orders
-            var query = _context.SalesDocuments
-                .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
-                .Include(s => s.Customer)
-                .Include(s => s.Lines)
-                .Include(s => s.Payments)
-                .AsQueryable();
+            // Get orders using Service
+            var orders = await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(
+                dealerIdInt,
+                type: "ORDER",
+                status: StatusFilter != "all" ? StatusFilter : null);
 
-            if (StatusFilter != "all")
+            // Calculate counts from the orders list
+            var allOrders = await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(
+                dealerIdInt,
+                type: "ORDER",
+                status: null);
+
+            TotalOrders = allOrders.Count();
+            OpenOrders = allOrders.Count(o => o.Status == "OPEN");
+            PaidOrders = allOrders.Count(o => o.Status == "PAID");
+            DeliveredOrders = allOrders.Count(o => o.Status == "DELIVERED");
+
+            Orders = orders.Select(o =>
             {
-                query = query.Where(s => s.Status == StatusFilter);
-            }
-
-            var orders = await query
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
-
-            // Calculate counts
-            TotalOrders = await _context.SalesDocuments
-                .CountAsync(s => s.DealerId == dealerIdInt && s.Type == "ORDER");
-            OpenOrders = await _context.SalesDocuments
-                .CountAsync(s => s.DealerId == dealerIdInt && s.Type == "ORDER" && s.Status == "OPEN");
-            PaidOrders = await _context.SalesDocuments
-                .CountAsync(s => s.DealerId == dealerIdInt && s.Type == "ORDER" && s.Status == "PAID");
-            DeliveredOrders = await _context.SalesDocuments
-                .CountAsync(s => s.DealerId == dealerIdInt && s.Type == "ORDER" && s.Status == "DELIVERED");
-
-            Orders = orders.Select(o => new OrderViewModel
-            {
-                Id = o.Id,
-                CustomerName = o.Customer?.FullName ?? "N/A",
-                CustomerPhone = o.Customer?.Phone ?? "N/A",
-                CreatedAt = o.CreatedAt,
-                VehicleCount = (int)(o.Lines?.Sum(l => (decimal?)l.Qty) ?? 0),
-                TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0,
-                PaidAmount = o.Payments?.Sum(p => p.Amount) ?? 0,
-                RemainingAmount = (o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0) - (o.Payments?.Sum(p => p.Amount) ?? 0),
-                Status = o.Status
+                var totalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0;
+                var paidAmount = o.Payments?.Sum(p => p.Amount) ?? 0;
+                return new OrderViewModel
+                {
+                    Id = o.Id,
+                    CustomerName = o.Customer?.FullName ?? "N/A",
+                    CustomerPhone = o.Customer?.Phone ?? "N/A",
+                    CreatedAt = o.CreatedAt,
+                    VehicleCount = (int)(o.Lines?.Sum(l => (decimal?)l.Qty) ?? 0),
+                    TotalAmount = totalAmount,
+                    PaidAmount = paidAmount,
+                    RemainingAmount = totalAmount - paidAmount,
+                    Status = o.Status
+                };
             }).ToList();
 
             return Page();

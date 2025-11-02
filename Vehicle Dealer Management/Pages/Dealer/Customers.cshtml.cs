@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.DAL.Models;
 
@@ -8,10 +9,14 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
 {
     public class CustomersModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
+        private readonly ApplicationDbContext _context; // Cần cho CustomerProfile và complex queries
 
-        public CustomersModel(ApplicationDbContext context)
+        public CustomersModel(
+            ISalesDocumentService salesDocumentService,
+            ApplicationDbContext context)
         {
+            _salesDocumentService = salesDocumentService;
             _context = context;
         }
 
@@ -68,30 +73,23 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 }
                 else if (filter == "withPurchase")
                 {
-                    var customerIdsWithOrders = await _context.SalesDocuments
-                        .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
-                        .Select(s => s.CustomerId)
-                        .Distinct()
-                        .ToListAsync();
+                    var orders = await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(dealerIdInt, "ORDER", null);
+                    var customerIdsWithOrders = orders.Select(o => o.CustomerId).Distinct().ToList();
                     query = query.Where(c => customerIdsWithOrders.Contains(c.Id));
                 }
                 else if (filter == "noPurchase")
                 {
-                    var customerIdsWithOrders = await _context.SalesDocuments
-                        .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
-                        .Select(s => s.CustomerId)
-                        .Distinct()
-                        .ToListAsync();
+                    var orders = await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(dealerIdInt, "ORDER", null);
+                    var customerIdsWithOrders = orders.Select(o => o.CustomerId).Distinct().ToList();
                     query = query.Where(c => !customerIdsWithOrders.Contains(c.Id));
                 }
             }
 
-            // Get order counts for each customer (need to do before filtering)
-            var orderCounts = await _context.SalesDocuments
-                .Where(s => s.DealerId == dealerIdInt && s.Type == "ORDER")
-                .GroupBy(s => s.CustomerId)
-                .Select(g => new { CustomerId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.CustomerId, x => x.Count);
+            // Get order counts for each customer using Service
+            var allOrders = await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(dealerIdInt, "ORDER", null);
+            var orderCounts = allOrders
+                .GroupBy(o => o.CustomerId)
+                .ToDictionary(g => g.Key, g => g.Count());
 
             var customers = await query
                 .OrderByDescending(c => c.CreatedDate)

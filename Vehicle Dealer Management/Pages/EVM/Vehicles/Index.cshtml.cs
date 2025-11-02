@@ -1,16 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Vehicle_Dealer_Management.BLL.IService;
 using Vehicle_Dealer_Management.DAL.Data;
 
 namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
 {
     public class IndexModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IVehicleService _vehicleService;
+        private readonly IPricePolicyService _pricePolicyService;
+        private readonly ApplicationDbContext _context; // Tạm thời giữ để check SalesDocumentLines
 
-        public IndexModel(ApplicationDbContext context)
+        public IndexModel(
+            IVehicleService vehicleService,
+            IPricePolicyService pricePolicyService,
+            ApplicationDbContext context)
         {
+            _vehicleService = vehicleService;
+            _pricePolicyService = pricePolicyService;
             _context = context;
         }
 
@@ -24,14 +32,11 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
                 return RedirectToPage("/Auth/Login");
             }
 
-            var vehicles = await _context.Vehicles.ToListAsync();
+            var vehicles = await _vehicleService.GetAllVehiclesAsync();
 
             foreach (var vehicle in vehicles)
             {
-                var price = await _context.PricePolicies
-                    .Where(p => p.VehicleId == vehicle.Id && p.DealerId == null)
-                    .OrderByDescending(p => p.ValidFrom)
-                    .FirstOrDefaultAsync();
+                var pricePolicy = await _pricePolicyService.GetActivePricePolicyAsync(vehicle.Id, null);
 
                 Vehicles.Add(new VehicleViewModel
                 {
@@ -40,7 +45,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
                     Variant = vehicle.VariantName,
                     ImageUrl = vehicle.ImageUrl,
                     Status = vehicle.Status,
-                    Msrp = price?.Msrp ?? 0
+                    Msrp = pricePolicy?.Msrp ?? 0
                 });
             }
 
@@ -55,7 +60,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
                 return RedirectToPage("/Auth/Login");
             }
 
-            var vehicle = await _context.Vehicles.FindAsync(vehicleId);
+            var vehicle = await _vehicleService.GetVehicleByIdAsync(vehicleId);
             if (vehicle == null)
             {
                 TempData["Error"] = "Không tìm thấy xe này.";
@@ -75,7 +80,7 @@ namespace Vehicle_Dealer_Management.Pages.EVM.Vehicles
             // Soft delete: Set status to DISCONTINUED instead of hard delete
             vehicle.Status = "DISCONTINUED";
             vehicle.UpdatedDate = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await _vehicleService.UpdateVehicleAsync(vehicle);
 
             TempData["Success"] = "Đã đổi trạng thái xe thành DISCONTINUED thành công!";
             return RedirectToPage();

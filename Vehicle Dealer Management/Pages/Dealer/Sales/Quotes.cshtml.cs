@@ -1,17 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 {
     public class QuotesModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISalesDocumentService _salesDocumentService;
 
-        public QuotesModel(ApplicationDbContext context)
+        public QuotesModel(ISalesDocumentService salesDocumentService)
         {
-            _context = context;
+            _salesDocumentService = salesDocumentService;
         }
 
         public List<QuoteViewModel> Quotes { get; set; } = new();
@@ -26,12 +25,10 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
 
             var dealerIdInt = int.Parse(dealerId);
 
-            var quotes = await _context.SalesDocuments
-                .Where(s => s.DealerId == dealerIdInt && s.Type == "QUOTE")
-                .Include(s => s.Customer)
-                .Include(s => s.Lines)
-                .OrderByDescending(s => s.CreatedAt)
-                .ToListAsync();
+            var quotes = await _salesDocumentService.GetSalesDocumentsByDealerIdAsync(
+                dealerIdInt, 
+                type: "QUOTE", 
+                status: null);
 
             Quotes = quotes.Select(q => new QuoteViewModel
             {
@@ -39,7 +36,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 CustomerName = q.Customer?.FullName ?? "N/A",
                 CreatedAt = q.CreatedAt,
                 Status = q.Status,
-                Total = q.Lines.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue)
+                Total = q.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0
             }).ToList();
 
             return Page();
