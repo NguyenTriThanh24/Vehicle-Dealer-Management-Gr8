@@ -4,9 +4,9 @@
 
 ## 📚 Tài liệu
 
-- **[Roadmap.md](Roadmap.md)** - Lộ trình phát triển (5-6 tuần)
-- **[requirements.md](requirements.md)** - Yêu cầu chức năng
-- **[database.md](database.md)** - Thiết kế database (15 tables)
+- **[ROADMAP.md](ROADMAP.md)** - 📖 **Tài liệu tổng hợp duy nhất** (Requirements + Database + Roadmap + Progress + Guidelines)
+- **[requirements.md](requirements.md)** - Yêu cầu chức năng chi tiết (tham khảo)
+- **[database.md](database.md)** - Thiết kế database chi tiết (tham khảo)
 
 ## 🚀 Quick Start
 
@@ -51,6 +51,5 @@ Sau khi seed data, dùng các tài khoản sau để đăng nhập:
 
 ## 📖 Tham khảo
 
-- **Roadmap:** Xem `Roadmap.md` để biết implementation plan
-- **Database:** Xem `database.md` cho schema details
-- **Requirements:** Xem `requirements.md` cho features & roles
+- **📖 Tài liệu chính:** Xem **[ROADMAP.md](ROADMAP.md)** - Tổng hợp đầy đủ Requirements, Database, Roadmap, Progress, và UI Guidelines
+- **Chi tiết:** Xem `requirements.md` và `database.md` cho thông tin chi tiết
