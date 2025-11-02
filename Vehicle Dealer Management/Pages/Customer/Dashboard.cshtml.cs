@@ -12,15 +12,18 @@ namespace Vehicle_Dealer_Management.Pages.Customer
         private readonly ApplicationDbContext _context;
         private readonly ISalesDocumentService _salesDocumentService;
         private readonly IVehicleService _vehicleService;
+        private readonly ITestDriveService _testDriveService;
 
         public DashboardModel(
             ApplicationDbContext context,
             ISalesDocumentService salesDocumentService,
-            IVehicleService vehicleService)
+            IVehicleService vehicleService,
+            ITestDriveService testDriveService)
         {
             _context = context;
             _salesDocumentService = salesDocumentService;
             _vehicleService = vehicleService;
+            _testDriveService = testDriveService;
         }
 
         public string CustomerName { get; set; } = "";
@@ -59,9 +62,8 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 var orders = await _salesDocumentService.GetSalesDocumentsByCustomerIdAsync(customerProfile.Id, "ORDER");
                 OrdersCount = orders.Count();
 
-                TestDrivesCount = await _context.TestDrives
-                    .Where(t => t.CustomerId == customerProfile.Id)
-                    .CountAsync();
+                var testDrives = await _testDriveService.GetTestDrivesByCustomerIdAsync(customerProfile.Id);
+                TestDrivesCount = testDrives.Count();
 
                 // Get recent orders
                 var recentOrders = orders

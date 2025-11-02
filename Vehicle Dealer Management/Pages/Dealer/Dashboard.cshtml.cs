@@ -11,15 +11,18 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
         private readonly ApplicationDbContext _context;
         private readonly ISalesDocumentService _salesDocumentService;
         private readonly ICustomerService _customerService;
+        private readonly ITestDriveService _testDriveService;
 
         public DashboardModel(
             ApplicationDbContext context,
             ISalesDocumentService salesDocumentService,
-            ICustomerService customerService)
+            ICustomerService customerService,
+            ITestDriveService testDriveService)
         {
             _context = context;
             _salesDocumentService = salesDocumentService;
             _customerService = customerService;
+            _testDriveService = testDriveService;
         }
 
         public string UserName { get; set; } = "";
@@ -93,17 +96,12 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 };
             }))).ToList();
 
-            // Get today's test drives
+            // Get today's test drives using service
             var today = DateTime.Today;
-            var testDrives = await _context.TestDrives
-                .Where(t => t.DealerId == dealerIdInt && 
-                            t.ScheduleTime.Date == today)
-                .Include(t => t.Customer)
-                .Include(t => t.Vehicle)
-                .OrderBy(t => t.ScheduleTime)
-                .ToListAsync();
+            var testDrives = await _testDriveService.GetTestDrivesByDealerAndDateAsync(dealerIdInt, today);
+            var testDrivesList = testDrives.ToList();
 
-            TodayTestDrives = testDrives.Select(t => new TestDriveViewModel
+            TodayTestDrives = testDrivesList.Select(t => new TestDriveViewModel
             {
                 CustomerName = t.Customer?.FullName ?? "N/A",
                 VehicleName = $"{t.Vehicle?.ModelName} {t.Vehicle?.VariantName}",

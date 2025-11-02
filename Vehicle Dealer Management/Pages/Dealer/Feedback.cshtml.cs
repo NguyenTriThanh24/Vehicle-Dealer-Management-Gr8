@@ -10,11 +10,16 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
     {
         private readonly ApplicationDbContext _context;
         private readonly ICustomerService _customerService;
+        private readonly IFeedbackService _feedbackService;
 
-        public FeedbackModel(ApplicationDbContext context, ICustomerService customerService)
+        public FeedbackModel(
+            ApplicationDbContext context, 
+            ICustomerService customerService,
+            IFeedbackService feedbackService)
         {
             _context = context;
             _customerService = customerService;
+            _feedbackService = feedbackService;
         }
 
         public string TypeFilter { get; set; } = "all";
@@ -36,27 +41,26 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             TypeFilter = type ?? "all";
             var dealerIdInt = int.Parse(dealerId);
 
-            // Get feedbacks
-            var query = _context.Feedbacks
-                .Where(f => f.DealerId == dealerIdInt)
-                .Include(f => f.Customer)
-                .AsQueryable();
+            // Get feedbacks using service
+            IEnumerable<Vehicle_Dealer_Management.DAL.Models.Feedback> feedbacks;
 
             if (TypeFilter != "all")
             {
-                query = query.Where(f => f.Type == TypeFilter);
+                feedbacks = await _feedbackService.GetFeedbacksByTypeAsync(TypeFilter, dealerIdInt);
+            }
+            else
+            {
+                feedbacks = await _feedbackService.GetFeedbacksByDealerIdAsync(dealerIdInt);
             }
 
-            var feedbacks = await query
-                .OrderByDescending(f => f.CreatedAt)
-                .ToListAsync();
+            var feedbacksList = feedbacks.ToList();
 
-            TotalFeedback = feedbacks.Count;
-            NewCount = feedbacks.Count(f => f.Status == "NEW");
-            InProgressCount = feedbacks.Count(f => f.Status == "IN_PROGRESS");
-            ResolvedCount = feedbacks.Count(f => f.Status == "RESOLVED");
+            TotalFeedback = feedbacksList.Count;
+            NewCount = feedbacksList.Count(f => f.Status == "NEW");
+            InProgressCount = feedbacksList.Count(f => f.Status == "IN_PROGRESS");
+            ResolvedCount = feedbacksList.Count(f => f.Status == "RESOLVED");
 
-            Feedbacks = (await Task.WhenAll(feedbacks.Select(async f =>
+            Feedbacks = (await Task.WhenAll(feedbacksList.Select(async f =>
             {
                 var customer = f.CustomerId > 0 
                     ? await _customerService.GetCustomerByIdAsync(f.CustomerId) 
@@ -78,28 +82,13 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
 
         public async Task<IActionResult> OnPostStartProcessAsync(int id)
         {
-            var feedback = await _context.Feedbacks.FindAsync(id);
-            if (feedback != null)
-            {
-                feedback.Status = "IN_PROGRESS";
-                feedback.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-
+            await _feedbackService.UpdateFeedbackStatusAsync(id, "IN_PROGRESS");
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostResolveAsync(int id)
         {
-            var feedback = await _context.Feedbacks.FindAsync(id);
-            if (feedback != null)
-            {
-                feedback.Status = "RESOLVED";
-                feedback.ResolvedAt = DateTime.UtcNow;
-                feedback.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-
+            await _feedbackService.UpdateFeedbackStatusAsync(id, "RESOLVED");
             return RedirectToPage();
         }
 

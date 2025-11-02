@@ -12,15 +12,18 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
         private readonly ApplicationDbContext _context;
         private readonly ICustomerService _customerService;
         private readonly IVehicleService _vehicleService;
+        private readonly ITestDriveService _testDriveService;
 
         public TestDrivesModel(
             ApplicationDbContext context,
             ICustomerService customerService,
-            IVehicleService vehicleService)
+            IVehicleService vehicleService,
+            ITestDriveService testDriveService)
         {
             _context = context;
             _customerService = customerService;
             _vehicleService = vehicleService;
+            _testDriveService = testDriveService;
         }
 
         public string Filter { get; set; } = "all";
@@ -61,46 +64,42 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 Name = v.ModelName + " " + v.VariantName
             }).ToList();
 
-            // Get test drives
-            var query = _context.TestDrives
-                .Where(t => t.DealerId == dealerIdInt)
-                .Include(t => t.Customer)
-                .Include(t => t.Vehicle)
-                .AsQueryable();
+            // Get test drives using service
+            IEnumerable<Vehicle_Dealer_Management.DAL.Models.TestDrive> testDrives;
 
-            // Apply filter
             switch (Filter)
             {
                 case "today":
-                    query = query.Where(t => t.ScheduleTime.Date == DateTime.Today);
+                    testDrives = await _testDriveService.GetTestDrivesByDealerAndDateAsync(dealerIdInt, DateTime.Today);
                     break;
                 case "requested":
-                    query = query.Where(t => t.Status == "REQUESTED");
+                    testDrives = await _testDriveService.GetTestDrivesByStatusAsync("REQUESTED", dealerIdInt);
                     break;
                 case "upcoming":
-                    query = query.Where(t => t.ScheduleTime > DateTime.Now && t.Status == "CONFIRMED");
+                    var allTestDrives = await _testDriveService.GetTestDrivesByDealerIdAsync(dealerIdInt);
+                    testDrives = allTestDrives.Where(t => t.ScheduleTime > DateTime.Now && t.Status == "CONFIRMED");
+                    break;
+                default:
+                    testDrives = await _testDriveService.GetTestDrivesByDealerIdAsync(dealerIdInt);
                     break;
             }
 
-            var testDrives = await query
-                .OrderBy(t => t.ScheduleTime)
-                .ToListAsync();
+            var testDrivesList = testDrives.ToList();
 
             // Calculate counts
-            TodayCount = await _context.TestDrives
-                .Where(t => t.DealerId == dealerIdInt && t.ScheduleTime.Date == DateTime.Today)
-                .CountAsync();
-            RequestedCount = await _context.TestDrives
-                .Where(t => t.DealerId == dealerIdInt && t.Status == "REQUESTED")
-                .CountAsync();
-            ConfirmedCount = await _context.TestDrives
-                .Where(t => t.DealerId == dealerIdInt && t.Status == "CONFIRMED")
-                .CountAsync();
-            DoneCount = await _context.TestDrives
-                .Where(t => t.DealerId == dealerIdInt && t.Status == "DONE")
-                .CountAsync();
+            var todayTestDrives = await _testDriveService.GetTestDrivesByDealerAndDateAsync(dealerIdInt, DateTime.Today);
+            TodayCount = todayTestDrives.Count();
 
-            TestDrives = testDrives.Select(t => new TestDriveViewModel
+            var requestedTestDrives = await _testDriveService.GetTestDrivesByStatusAsync("REQUESTED", dealerIdInt);
+            RequestedCount = requestedTestDrives.Count();
+
+            var confirmedTestDrives = await _testDriveService.GetTestDrivesByStatusAsync("CONFIRMED", dealerIdInt);
+            ConfirmedCount = confirmedTestDrives.Count();
+
+            var doneTestDrives = await _testDriveService.GetTestDrivesByStatusAsync("DONE", dealerIdInt);
+            DoneCount = doneTestDrives.Count();
+
+            TestDrives = testDrivesList.Select(t => new TestDriveViewModel
             {
                 Id = t.Id,
                 CustomerName = t.Customer?.FullName ?? "N/A",
@@ -116,27 +115,13 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
 
         public async Task<IActionResult> OnPostConfirmAsync(int id)
         {
-            var testDrive = await _context.TestDrives.FindAsync(id);
-            if (testDrive != null)
-            {
-                testDrive.Status = "CONFIRMED";
-                testDrive.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-
+            await _testDriveService.UpdateTestDriveStatusAsync(id, "CONFIRMED");
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostMarkDoneAsync(int id)
         {
-            var testDrive = await _context.TestDrives.FindAsync(id);
-            if (testDrive != null)
-            {
-                testDrive.Status = "DONE";
-                testDrive.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-            }
-
+            await _testDriveService.UpdateTestDriveStatusAsync(id, "DONE");
             return RedirectToPage();
         }
 
@@ -150,20 +135,17 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
 
             var scheduleTime = date.Add(time);
 
-            var testDrive = new TestDrive
+            var testDrive = new Vehicle_Dealer_Management.DAL.Models.TestDrive
             {
                 CustomerId = customerId,
                 DealerId = int.Parse(dealerId),
                 VehicleId = vehicleId,
                 ScheduleTime = scheduleTime,
                 Status = "CONFIRMED", // Auto confirm if created by staff
-                Note = note,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                Note = note
             };
 
-            _context.TestDrives.Add(testDrive);
-            await _context.SaveChangesAsync();
+            await _testDriveService.CreateTestDriveAsync(testDrive);
 
             return RedirectToPage();
         }

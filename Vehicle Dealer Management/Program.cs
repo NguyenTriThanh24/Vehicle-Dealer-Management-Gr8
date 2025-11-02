@@ -32,6 +32,8 @@ builder.Services.AddScoped<IStockRepository, StockRepository>();
 builder.Services.AddScoped<ISalesDocumentRepository, SalesDocumentRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IDeliveryRepository, DeliveryRepository>();
+builder.Services.AddScoped<ITestDriveRepository, TestDriveRepository>();
+builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 
 // Register Services (BLL Layer)
 builder.Services.AddScoped<IVehicleService, VehicleService>();
@@ -43,6 +45,8 @@ builder.Services.AddScoped<IStockService, StockService>();
 builder.Services.AddScoped<ISalesDocumentService, SalesDocumentService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+builder.Services.AddScoped<ITestDriveService, TestDriveService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 var app = builder.Build();
 

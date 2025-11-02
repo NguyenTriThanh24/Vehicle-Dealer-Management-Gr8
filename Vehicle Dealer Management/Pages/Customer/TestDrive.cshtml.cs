@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.BLL.IService;
+using Vehicle_Dealer_Management.DAL.Models;
 
 namespace Vehicle_Dealer_Management.Pages.Customer
 {
@@ -11,15 +12,18 @@ namespace Vehicle_Dealer_Management.Pages.Customer
         private readonly ApplicationDbContext _context;
         private readonly IDealerService _dealerService;
         private readonly IVehicleService _vehicleService;
+        private readonly ITestDriveService _testDriveService;
 
         public TestDriveModel(
             ApplicationDbContext context,
             IDealerService dealerService,
-            IVehicleService vehicleService)
+            IVehicleService vehicleService,
+            ITestDriveService testDriveService)
         {
             _context = context;
             _dealerService = dealerService;
             _vehicleService = vehicleService;
+            _testDriveService = testDriveService;
         }
 
         public List<TestDriveViewModel> TestDrives { get; set; } = new();
@@ -61,12 +65,7 @@ namespace Vehicle_Dealer_Management.Pages.Customer
 
             if (customerProfile != null)
             {
-                var testDrives = await _context.TestDrives
-                    .Where(t => t.CustomerId == customerProfile.Id)
-                    .Include(t => t.Vehicle)
-                    .Include(t => t.Dealer)
-                    .OrderByDescending(t => t.ScheduleTime)
-                    .ToListAsync();
+                var testDrives = await _testDriveService.GetTestDrivesByCustomerIdAsync(customerProfile.Id);
 
                 TestDrives = testDrives.Select(t => new TestDriveViewModel
                 {
@@ -152,20 +151,18 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 return RedirectToPage();
             }
 
-            // Create test drive
-            var testDrive = new Vehicle_Dealer_Management.DAL.Models.TestDrive
+            // Create test drive using service
+            var testDrive = new TestDrive
             {
                 CustomerId = customerProfile.Id,
                 DealerId = dealerId,
                 VehicleId = vehicleId,
                 ScheduleTime = scheduleDateTime,
                 Status = "REQUESTED",
-                Note = note,
-                CreatedAt = DateTime.UtcNow
+                Note = note
             };
 
-            _context.TestDrives.Add(testDrive);
-            await _context.SaveChangesAsync();
+            await _testDriveService.CreateTestDriveAsync(testDrive);
 
             TempData["Success"] = "Đặt lịch lái thử thành công! Đại lý sẽ xác nhận và liên hệ với bạn.";
             return RedirectToPage();
