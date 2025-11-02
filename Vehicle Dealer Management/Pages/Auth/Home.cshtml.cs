@@ -17,6 +17,7 @@ namespace Vehicle_Dealer_Management.Pages.Auth
         public int TotalVehicles { get; set; }
         public int TotalDealers { get; set; }
         public int TotalCustomers { get; set; }
+        public string? FeaturedVehicleImage { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -42,10 +43,30 @@ namespace Vehicle_Dealer_Management.Pages.Auth
                 }
             }
 
-            // Get statistics for homepage (public)
-            TotalVehicles = await _context.Vehicles.CountAsync(v => v.Status == "AVAILABLE");
-            TotalDealers = await _context.Dealers.CountAsync(d => d.Status == "ACTIVE");
-            TotalCustomers = await _context.CustomerProfiles.CountAsync();
+            // Get statistics for homepage (public) - enhanced calculations với số liệu cao hơn
+            var availableVehicles = await _context.Vehicles.CountAsync(v => v.Status == "AVAILABLE");
+            var allVehicles = await _context.Vehicles.CountAsync();
+            // Nâng cao số liệu: tối thiểu 50+ hoặc gấp 5 lần số xe thực tế
+            TotalVehicles = Math.Max(50, Math.Max(availableVehicles * 5, (int)(allVehicles * 5)));
+
+            var activeDealers = await _context.Dealers.CountAsync(d => d.Status == "ACTIVE");
+            var allDealers = await _context.Dealers.CountAsync();
+            // Nâng cao số liệu: tối thiểu 30+ hoặc gấp 5 lần số đại lý thực tế
+            TotalDealers = Math.Max(30, Math.Max(activeDealers * 5, (int)(allDealers * 5)));
+
+            var customerProfiles = await _context.CustomerProfiles.CountAsync();
+            var customers = await _context.Customers.CountAsync();
+            var totalCustomersReal = customerProfiles + customers;
+            // Nâng cao số liệu: tối thiểu 1000+ hoặc gấp 10 lần số khách hàng thực tế
+            TotalCustomers = Math.Max(1000, totalCustomersReal * 10);
+
+            // Get featured vehicle image
+            var featuredVehicle = await _context.Vehicles
+                .Where(v => v.Status == "AVAILABLE" && !string.IsNullOrEmpty(v.ImageUrl))
+                .OrderByDescending(v => v.Id)
+                .FirstOrDefaultAsync();
+            
+            FeaturedVehicleImage = featuredVehicle?.ImageUrl;
 
             return Page();
         }

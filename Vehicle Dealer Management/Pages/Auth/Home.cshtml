@@ -197,6 +197,19 @@
         margin: 0 auto;
     }
     
+    .story-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4rem;
+        align-items: center;
+    }
+    
+    @@media (max-width: 968px) {
+        .story-section {
+            grid-template-columns: 1fr !important;
+        }
+    }
+    
     @@media (max-width: 768px) {
         .hero-title {
             font-size: 2rem;
@@ -217,6 +230,10 @@
         
         .grid.grid-cols-5 {
             grid-template-columns: repeat(2, 1fr) !important;
+        }
+        
+        .story-section {
+            gap: 2rem;
         }
     }
     
@@ -247,6 +264,54 @@
                 <i class="bi bi-person-plus"></i>
                 Đăng ký ngay
             </a>
+        </div>
+    </div>
+</section>
+
+<!-- Story & Mission Section -->
+<section style="background: var(--bg); padding: 6rem 2rem; position: relative; overflow: hidden;">
+    <div style="max-width: 1200px; margin: 0 auto;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+            <!-- Left: Story Text -->
+            <div>
+                <h2 style="font-size: 2.5rem; font-weight: 700; color: var(--text-heading); margin-bottom: 1.5rem;">
+                    Câu chuyện của chúng tôi
+                </h2>
+                <div style="color: var(--text-muted); line-height: 1.8; font-size: 1.125rem; margin-bottom: 2rem;">
+                    <p style="margin-bottom: 1.5rem;">
+                        Từ một tầm nhìn về tương lai xanh, chúng tôi đã xây dựng nên hệ thống quản lý đại lý xe điện hàng đầu Việt Nam. 
+                        Với sứ mệnh mang đến giải pháp công nghệ toàn diện, chúng tôi kết nối nhà sản xuất, đại lý và khách hàng 
+                        trong một hệ sinh thái bền vững.
+                    </p>
+                    <p style="margin-bottom: 1.5rem;">
+                        Mỗi chiếc xe điện không chỉ là phương tiện, mà còn là bước tiến của chúng ta hướng tới một tương lai 
+                        không carbon. Chúng tôi tin rằng công nghệ và sự tiện lợi có thể song hành cùng trách nhiệm với môi trường.
+                    </p>
+                </div>
+                
+                <div style="background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent-cyan); padding: 2rem; border-radius: var(--radius-sm);">
+                    <h3 style="font-size: 1.5rem; font-weight: 600; color: var(--text-heading); margin-bottom: 1rem;">
+                        <i class="bi bi-bullseye" style="color: var(--accent-cyan); margin-right: 0.5rem;"></i>
+                        Sứ mệnh của chúng tôi
+                    </h3>
+                    <p style="color: var(--text-muted); line-height: 1.8;">
+                        Đơn giản hóa quy trình quản lý, tối ưu hiệu quả kinh doanh và đem đến trải nghiệm tốt nhất cho mọi khách hàng. 
+                        Chúng tôi cam kết hỗ trợ các đối tác đại lý phát triển bền vững trong thời đại xe điện.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Right: Vehicle Image -->
+            <div style="position: relative;">
+                <div style="background: linear-gradient(135deg, var(--black) 0%, var(--surface) 100%); border-radius: var(--radius); padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                    <img src="https://icar.vn/wp-content/uploads/2024/01/top-5-xe-o-to-dien-co-muc-gia-tot-nhat-2023-800x417.jpg" 
+                         alt="Xe điện cao cấp" 
+                         style="width: 100%; height: auto; max-height: 400px; border-radius: var(--radius-sm); object-fit: contain; box-shadow: 0 10px 40px rgba(155, 234, 251, 0.2);" />
+                </div>
+                <!-- Decorative elements -->
+                <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: var(--accent-cyan); opacity: 0.1; border-radius: 50%; z-index: -1;"></div>
+                <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: var(--accent-cyan); opacity: 0.05; border-radius: 50%; z-index: -1;"></div>
+            </div>
         </div>
     </div>
 </section>
@@ -336,59 +401,6 @@
             <h3 class="feature-title">An toàn & Bảo mật</h3>
             <p class="feature-description">
                 Phân quyền theo vai trò, bảo mật dữ liệu và tuân thủ các tiêu chuẩn bảo mật.
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- Test Accounts Section -->
-<section style="background: var(--surface); padding: 4rem 2rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
-    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
-        <h2 class="section-title" style="margin-bottom: 1rem;">Dùng thử ngay</h2>
-        <p class="section-subtitle" style="margin-bottom: 3rem;">
-            Đăng nhập với các tài khoản demo để trải nghiệm hệ thống
-        </p>
-        
-        <div class="grid grid-cols-5" style="gap: 1.5rem;">
-            <a href="/Login?email=customer@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">👤</div>
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">Customer</h4>
-                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">customer@test.com</code>
-                <p class="text-muted" style="font-size: 0.75rem;">Khách hàng</p>
-            </a>
-
-            <a href="/Login?email=dealerstaff@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">💼</div>
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">Dealer Staff</h4>
-                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">dealerstaff@test.com</code>
-                <p class="text-muted" style="font-size: 0.75rem;">NV Đại lý</p>
-            </a>
-
-            <a href="/Login?email=dealermanager@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">👔</div>
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">Dealer Manager</h4>
-                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">dealermanager@test.com</code>
-                <p class="text-muted" style="font-size: 0.75rem;">QL Đại lý</p>
-            </a>
-
-            <a href="/Login?email=evmstaff@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">🏭</div>
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">EVM Staff</h4>
-                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">evmstaff@test.com</code>
-                <p class="text-muted" style="font-size: 0.75rem;">NV Hãng</p>
-            </a>
-
-            <a href="/Login?email=admin@test.com" class="card" style="text-align: center; padding: 1.5rem; text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                <div style="font-size: 2.5rem; margin-bottom: 1rem;">👑</div>
-                <h4 style="margin-bottom: 0.5rem; font-size: 1rem;">EVM Admin</h4>
-                <code style="color: var(--accent-cyan); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">admin@test.com</code>
-                <p class="text-muted" style="font-size: 0.75rem;">Admin</p>
-            </a>
-        </div>
-
-        <div style="margin-top: 2rem; padding: 1rem; background: var(--black); border-radius: var(--radius-sm); display: inline-block;">
-            <p style="margin: 0;">
-                <i class="bi bi-key"></i> Password tất cả: <code style="color: var(--accent-cyan); font-size: 1.125rem; font-weight: 600;">123456</code>
             </p>
         </div>
     </div>
