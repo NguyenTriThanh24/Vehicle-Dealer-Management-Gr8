@@ -455,6 +455,117 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     }
                 }
             }
+
+            // Seed sample Deliveries với các trạng thái khác nhau để test workflow
+            // Lưu ý: Delivery thường được tạo tự động khi dealer staff lên lịch giao xe
+            // Nhưng để test, tạo một vài mẫu với các trạng thái khác nhau
+            if (!context.Deliveries.Any() && context.SalesDocuments.Any(sd => sd.Type == "ORDER"))
+            {
+                var orders = context.SalesDocuments
+                    .Where(sd => sd.Type == "ORDER" && sd.Status != "DELIVERED")
+                    .Take(3)
+                    .ToList();
+
+                if (orders.Any())
+                {
+                    var deliveries = new List<Delivery>();
+                    var now = DateTime.UtcNow;
+
+                    // Delivery 1: SCHEDULED (Đã lên lịch - chờ giao xe)
+                    if (orders.Count > 0)
+                    {
+                        deliveries.Add(new Delivery
+                        {
+                            SalesDocumentId = orders[0].Id,
+                            ScheduledDate = now.AddDays(7),
+                            Status = "SCHEDULED",
+                            CustomerConfirmed = false, // Field mới
+                            CustomerConfirmedDate = null, // Field mới
+                            CreatedDate = now.AddDays(-2)
+                        });
+                    }
+
+                    // Delivery 2: IN_TRANSIT (Đang giao xe) - chưa customer confirm
+                    if (orders.Count > 1)
+                    {
+                        deliveries.Add(new Delivery
+                        {
+                            SalesDocumentId = orders[1].Id,
+                            ScheduledDate = now.AddDays(5),
+                            Status = "IN_TRANSIT",
+                            CustomerConfirmed = false, // Field mới - chưa confirm
+                            CustomerConfirmedDate = null, // Field mới
+                            CreatedDate = now.AddDays(-5)
+                        });
+                    }
+
+                    // Delivery 3: IN_TRANSIT (Đang giao xe) - đã customer confirm
+                    if (orders.Count > 2)
+                    {
+                        deliveries.Add(new Delivery
+                        {
+                            SalesDocumentId = orders[2].Id,
+                            ScheduledDate = now.AddDays(3),
+                            Status = "IN_TRANSIT",
+                            CustomerConfirmed = true, // Field mới - đã confirm
+                            CustomerConfirmedDate = now.AddDays(-1), // Field mới
+                            CreatedDate = now.AddDays(-7)
+                        });
+                    }
+
+                    if (deliveries.Any())
+                    {
+                        context.Deliveries.AddRange(deliveries);
+                        context.SaveChanges();
+
+                        // Update SalesDocument status tương ứng
+                        foreach (var delivery in deliveries)
+                        {
+                            var order = orders.FirstOrDefault(o => o.Id == delivery.SalesDocumentId);
+                            if (order != null)
+                            {
+                                if (delivery.Status == "SCHEDULED")
+                                {
+                                    order.Status = "DELIVERY_SCHEDULED";
+                                }
+                                else if (delivery.Status == "IN_TRANSIT")
+                                {
+                                    order.Status = "IN_DELIVERY";
+                                }
+                                order.UpdatedAt = DateTime.UtcNow;
+                            }
+                        }
+                        context.SaveChanges();
+                    }
+                }
+            }
+
+            // Update existing Deliveries để đảm bảo tính nhất quán dữ liệu với các field mới
+            // Delivery mới sẽ tự động có CustomerConfirmed = false (default trong model)
+            var deliveriesToFix = context.Deliveries
+                .Where(d => (!d.CustomerConfirmed && d.CustomerConfirmedDate.HasValue) || // CustomerConfirmedDate phải null nếu CustomerConfirmed = false
+                           (d.Status == "SCHEDULED" && d.CustomerConfirmed)) // SCHEDULED không thể đã confirmed
+                .ToList();
+
+            foreach (var delivery in deliveriesToFix)
+            {
+                if (delivery.Status == "SCHEDULED" && delivery.CustomerConfirmed)
+                {
+                    // Reset confirmation nếu status là SCHEDULED (chưa bắt đầu giao thì không thể đã confirm)
+                    delivery.CustomerConfirmed = false;
+                    delivery.CustomerConfirmedDate = null;
+                }
+                else if (!delivery.CustomerConfirmed && delivery.CustomerConfirmedDate.HasValue)
+                {
+                    // Xóa confirmed date nếu chưa confirmed
+                    delivery.CustomerConfirmedDate = null;
+                }
+            }
+
+            if (deliveriesToFix.Any())
+            {
+                context.SaveChanges();
+            }
         }
     }
 }

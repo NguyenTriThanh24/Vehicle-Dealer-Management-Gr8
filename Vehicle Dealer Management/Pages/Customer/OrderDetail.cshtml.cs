@@ -108,10 +108,13 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 // Delivery
                 Delivery = delivery != null ? new DeliveryViewModel
                 {
+                    Id = delivery.Id,
                     ScheduledDate = delivery.ScheduledDate,
                     DeliveredDate = delivery.DeliveredDate,
                     Status = delivery.Status,
-                    HandoverNote = delivery.HandoverNote
+                    HandoverNote = delivery.HandoverNote,
+                    CustomerConfirmed = delivery.CustomerConfirmed,
+                    CustomerConfirmedDate = delivery.CustomerConfirmedDate
                 } : null,
 
                 // Totals
@@ -122,6 +125,49 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             };
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostConfirmReceiptAsync(int id)
+        {
+            var userId = HttpContext.Session.GetString("UserId");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Auth/Login");
+            }
+
+            var userIdInt = int.Parse(userId);
+            var customer = await _context.CustomerProfiles
+                .FirstOrDefaultAsync(c => c.UserId == userIdInt);
+
+            if (customer == null)
+            {
+                return RedirectToPage("/Auth/Profile");
+            }
+
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
+            if (order == null || order.CustomerId != customer.Id || order.Type != "ORDER")
+            {
+                return NotFound();
+            }
+
+            var delivery = await _deliveryService.GetDeliveryBySalesDocumentIdAsync(order.Id);
+            if (delivery == null)
+            {
+                TempData["Error"] = "Chưa có thông tin giao xe.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+                await _deliveryService.CustomerConfirmReceiptAsync(delivery.Id);
+                TempData["Success"] = "Đã xác nhận nhận xe thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi: {ex.Message}";
+            }
+
+            return RedirectToPage(new { id });
         }
 
         public class OrderDetailViewModel
@@ -178,10 +224,13 @@ namespace Vehicle_Dealer_Management.Pages.Customer
 
         public class DeliveryViewModel
         {
+            public int Id { get; set; }
             public DateTime ScheduledDate { get; set; }
             public DateTime? DeliveredDate { get; set; }
             public string Status { get; set; } = "";
             public string? HandoverNote { get; set; }
+            public bool CustomerConfirmed { get; set; }
+            public DateTime? CustomerConfirmedDate { get; set; }
         }
     }
 }

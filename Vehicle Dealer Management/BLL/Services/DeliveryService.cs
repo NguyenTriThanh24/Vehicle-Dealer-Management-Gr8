@@ -129,6 +129,90 @@ namespace Vehicle_Dealer_Management.BLL.Services
             return delivery;
         }
 
+        public async Task<Delivery> StartDeliveryAsync(int deliveryId)
+        {
+            var delivery = await _deliveryRepository.GetByIdAsync(deliveryId);
+            if (delivery == null)
+            {
+                throw new KeyNotFoundException($"Delivery with ID {deliveryId} not found");
+            }
+
+            if (delivery.Status != "SCHEDULED")
+            {
+                throw new InvalidOperationException($"Cannot start delivery. Current status: {delivery.Status}. Expected: SCHEDULED");
+            }
+
+            delivery.Status = "IN_TRANSIT";
+            await _deliveryRepository.UpdateAsync(delivery);
+
+            // Auto-update sales document status
+            var salesDocument = await _salesDocumentRepository.GetByIdAsync(delivery.SalesDocumentId);
+            if (salesDocument != null && salesDocument.Type == "ORDER")
+            {
+                salesDocument.Status = "IN_DELIVERY";
+                salesDocument.UpdatedAt = DateTime.UtcNow;
+                await _salesDocumentRepository.UpdateAsync(salesDocument);
+            }
+
+            return delivery;
+        }
+
+        public async Task<Delivery> CustomerConfirmReceiptAsync(int deliveryId)
+        {
+            var delivery = await _deliveryRepository.GetByIdAsync(deliveryId);
+            if (delivery == null)
+            {
+                throw new KeyNotFoundException($"Delivery with ID {deliveryId} not found");
+            }
+
+            if (delivery.Status != "IN_TRANSIT")
+            {
+                throw new InvalidOperationException($"Customer cannot confirm receipt. Current status: {delivery.Status}. Expected: IN_TRANSIT");
+            }
+
+            delivery.CustomerConfirmed = true;
+            delivery.CustomerConfirmedDate = DateTime.UtcNow;
+            await _deliveryRepository.UpdateAsync(delivery);
+
+            return delivery;
+        }
+
+        public async Task<Delivery> CompleteDeliveryAsync(int deliveryId, DateTime deliveredDate, string? handoverNote = null)
+        {
+            var delivery = await _deliveryRepository.GetByIdAsync(deliveryId);
+            if (delivery == null)
+            {
+                throw new KeyNotFoundException($"Delivery with ID {deliveryId} not found");
+            }
+
+            if (delivery.Status != "IN_TRANSIT")
+            {
+                throw new InvalidOperationException($"Cannot complete delivery. Current status: {delivery.Status}. Expected: IN_TRANSIT");
+            }
+
+            if (!delivery.CustomerConfirmed)
+            {
+                throw new InvalidOperationException("Cannot complete delivery. Customer has not confirmed receipt yet.");
+            }
+
+            delivery.DeliveredDate = deliveredDate;
+            delivery.Status = "DELIVERED";
+            delivery.HandoverNote = handoverNote ?? delivery.HandoverNote;
+
+            await _deliveryRepository.UpdateAsync(delivery);
+
+            // Auto-update sales document status
+            var salesDocument = await _salesDocumentRepository.GetByIdAsync(delivery.SalesDocumentId);
+            if (salesDocument != null && salesDocument.Type == "ORDER")
+            {
+                salesDocument.Status = "DELIVERED";
+                salesDocument.UpdatedAt = DateTime.UtcNow;
+                await _salesDocumentRepository.UpdateAsync(salesDocument);
+            }
+
+            return delivery;
+        }
+
         public async Task<bool> DeliveryExistsAsync(int id)
         {
             return await _deliveryRepository.ExistsAsync(id);

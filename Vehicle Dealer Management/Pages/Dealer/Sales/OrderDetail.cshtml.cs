@@ -108,7 +108,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                     ScheduledDate = order.Delivery.ScheduledDate,
                     DeliveredDate = order.Delivery.DeliveredDate,
                     Status = order.Delivery.Status,
-                    HandoverNote = order.Delivery.HandoverNote
+                    HandoverNote = order.Delivery.HandoverNote,
+                    CustomerConfirmed = order.Delivery.CustomerConfirmed,
+                    CustomerConfirmedDate = order.Delivery.CustomerConfirmedDate
                 } : null,
 
                 // Totals
@@ -207,7 +209,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             return RedirectToPage(new { id });
         }
 
-        public async Task<IActionResult> OnPostMarkDeliveredAsync(int id, string? handoverNote)
+        public async Task<IActionResult> OnPostStartDeliveryAsync(int id)
         {
             var dealerId = HttpContext.Session.GetString("DealerId");
             if (string.IsNullOrEmpty(dealerId))
@@ -232,10 +234,54 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 return RedirectToPage(new { id });
             }
 
-            // Mark as delivered using Service (auto-updates order status)
-            await _deliveryService.MarkDeliveryAsDeliveredAsync(delivery.Id, DateTime.UtcNow, handoverNote);
+            try
+            {
+                await _deliveryService.StartDeliveryAsync(delivery.Id);
+                TempData["Success"] = "Đã bắt đầu giao xe!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi: {ex.Message}";
+            }
 
-            TempData["Success"] = "Xác nhận giao xe thành công!";
+            return RedirectToPage(new { id });
+        }
+
+        public async Task<IActionResult> OnPostCompleteDeliveryAsync(int id, string? handoverNote)
+        {
+            var dealerId = HttpContext.Session.GetString("DealerId");
+            if (string.IsNullOrEmpty(dealerId))
+            {
+                return RedirectToPage("/Auth/Login");
+            }
+
+            var dealerIdInt = int.Parse(dealerId);
+
+            // Get order with delivery
+            var order = await _salesDocumentService.GetSalesDocumentWithDetailsAsync(id);
+
+            if (order == null || order.DealerId != dealerIdInt || order.Type != "ORDER")
+            {
+                return NotFound();
+            }
+
+            var delivery = await _deliveryService.GetDeliveryBySalesDocumentIdAsync(order.Id);
+            if (delivery == null)
+            {
+                TempData["Error"] = "Chưa có lịch giao xe. Vui lòng lên lịch giao trước.";
+                return RedirectToPage(new { id });
+            }
+
+            try
+            {
+                await _deliveryService.CompleteDeliveryAsync(delivery.Id, DateTime.UtcNow, handoverNote);
+                TempData["Success"] = "Hoàn thành giao xe thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Lỗi: {ex.Message}";
+            }
+
             return RedirectToPage(new { id });
         }
 
@@ -312,6 +358,8 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             public DateTime? DeliveredDate { get; set; }
             public string Status { get; set; } = "";
             public string? HandoverNote { get; set; }
+            public bool CustomerConfirmed { get; set; }
+            public DateTime? CustomerConfirmedDate { get; set; }
         }
     }
 }

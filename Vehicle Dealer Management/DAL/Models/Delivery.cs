@@ -23,6 +23,10 @@ namespace Vehicle_Dealer_Management.DAL.Models
         [StringLength(1000)]
         public string? HandoverNote { get; set; } // Ghi chú giao xe
 
+        public bool CustomerConfirmed { get; set; } = false; // Khách hàng đã xác nhận nhận xe chưa
+
+        public DateTime? CustomerConfirmedDate { get; set; } // Ngày khách hàng xác nhận nhận xe
+
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

@@ -52,6 +52,10 @@ builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
+builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+
+// Add HttpClient for payment gateway
+builder.Services.AddHttpClient<IPaymentGatewayService, PaymentGatewayService>();
 
 var app = builder.Build();
 

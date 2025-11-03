@@ -274,12 +274,49 @@
                                 <div>@Model.Order.Delivery.HandoverNote</div>
                             </div>
                         }
-                        @if (Model.Order.Delivery.Status == "SCHEDULED" || Model.Order.Delivery.Status == "IN_TRANSIT")
-                        {
-                            <button class="btn btn-success" onclick="document.getElementById('markDeliveredModal').style.display='flex'">
-                                <i class="bi bi-check-circle"></i> Xác nhận đã giao
-                            </button>
-                        }
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1rem;">
+                            @if (Model.Order.Delivery.Status == "SCHEDULED")
+                            {
+                                <form method="post" asp-page-handler="StartDelivery" style="margin: 0;">
+                                    <input type="hidden" name="id" value="@Model.Order.Id" />
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-play-circle"></i> Bắt đầu giao xe
+                                    </button>
+                                </form>
+                            }
+                            @if (Model.Order.Delivery.Status == "IN_TRANSIT")
+                            {
+                                <div style="flex: 1;">
+                                    @if (Model.Order.Delivery.CustomerConfirmed)
+                                    {
+                                        <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius-sm); color: var(--success);">
+                                            <i class="bi bi-check-circle"></i> Khách hàng đã xác nhận nhận xe
+                                            @if (Model.Order.Delivery.CustomerConfirmedDate.HasValue)
+                                            {
+                                                <div style="font-size: 0.875rem; margin-top: 0.25rem;">
+                                                    @Model.Order.Delivery.CustomerConfirmedDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                                </div>
+                                            }
+                                        </div>
+                                        <form method="post" asp-page-handler="CompleteDelivery" style="margin: 0;">
+                                            <input type="hidden" name="id" value="@Model.Order.Id" />
+                                            <button type="submit" class="btn btn-success" onclick="return confirm('Xác nhận hoàn thành giao xe?')">
+                                                <i class="bi bi-check-circle"></i> Hoàn thành giao xe
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <div style="margin-bottom: 0.5rem; padding: 0.75rem; background: var(--warning-bg); border: 1px solid var(--warning); border-radius: var(--radius-sm); color: var(--warning);">
+                                            <i class="bi bi-clock"></i> Đang chờ khách hàng xác nhận nhận xe
+                                        </div>
+                                        <button class="btn btn-success" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                            <i class="bi bi-check-circle"></i> Hoàn thành (chờ khách hàng xác nhận)
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
                 else
@@ -405,38 +442,6 @@
     </div>
 </div>
 
-<!-- Mark Delivered Modal -->
-<div id="markDeliveredModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Xác nhận đã giao xe</h3>
-            <button class="modal-close" onclick="document.getElementById('markDeliveredModal').style.display='none'">
-                <i class="bi bi-x"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <form method="post" asp-page-handler="MarkDelivered">
-                <input type="hidden" name="id" value="@Model.Order.Id" />
-                <div style="margin-bottom: 1rem;">
-                    <p class="text-muted">Xác nhận rằng đơn hàng đã được giao cho khách hàng thành công.</p>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label class="form-label">Ghi chú giao xe (tùy chọn)</label>
-                    <textarea name="handoverNote" class="form-control" rows="4" 
-                              placeholder="Ghi chú về quá trình giao xe, tình trạng xe, hoặc thông tin khác..."></textarea>
-                </div>
-                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('markDeliveredModal').style.display='none'">
-                        Hủy
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Xác nhận đã giao
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 @if (TempData["Success"] != null)
 {

@@ -42,9 +42,9 @@ namespace Vehicle_Dealer_Management.BLL.Services
             }
 
             // Validate method
-            if (method != "CASH" && method != "FINANCE")
+            if (method != "CASH" && method != "FINANCE" && method != "MOMO" && method != "VNPAY")
             {
-                throw new ArgumentException("Payment method must be 'CASH' or 'FINANCE'", nameof(method));
+                throw new ArgumentException("Payment method must be 'CASH', 'FINANCE', 'MOMO', or 'VNPAY'", nameof(method));
             }
 
             // Validate amount

@@ -36,6 +36,14 @@
         <div class="stat-value" style="color: @(Model.Order.RemainingAmount > 0 ? "var(--error)" : "var(--success)");">
             @Model.Order.RemainingAmount.ToString("N0") VND
         </div>
+        @if (Model.Order.RemainingAmount > 0)
+        {
+            <div style="margin-top: 0.5rem;">
+                <a href="/Customer/Payment/Checkout?orderId=@Model.Order.Id" class="btn btn-primary btn-sm" style="width: 100%;">
+                    <i class="bi bi-credit-card"></i> Thanh toán
+                </a>
+            </div>
+        }
     </div>
 </div>
 
@@ -240,6 +248,14 @@
                                             {
                                                 <span style="color: var(--info);"><i class="bi bi-cash"></i> Tiền mặt</span>
                                             }
+                                            else if (payment.Method == "MOMO")
+                                            {
+                                                <span style="color: #AF0B0E;"><i class="bi bi-wallet2"></i> MoMo</span>
+                                            }
+                                            else if (payment.Method == "VNPAY")
+                                            {
+                                                <span style="color: #0066CC;"><i class="bi bi-credit-card"></i> VNPay</span>
+                                            }
                                             else
                                             {
                                                 <span style="color: var(--accent-cyan);"><i class="bi bi-credit-card"></i> Trả góp</span>
@@ -263,7 +279,15 @@
                     <div class="empty-state" style="padding: 2rem 1rem;">
                         <div class="empty-state-icon">💰</div>
                         <div class="empty-state-title">Chưa có thanh toán</div>
-                        <div class="empty-state-text">Vui lòng thanh toán theo hướng dẫn của đại lý</div>
+                        <div class="empty-state-text">Thanh toán online để hoàn tất đơn hàng</div>
+                        @if (Model.Order.RemainingAmount > 0)
+                        {
+                            <div style="margin-top: 1.5rem;">
+                                <a href="/Customer/Payment/Checkout?orderId=@Model.Order.Id" class="btn btn-primary">
+                                    <i class="bi bi-credit-card"></i> Thanh toán ngay (@Model.Order.RemainingAmount.ToString("N0") VND)
+                                </a>
+                            </div>
+                        }
                     </div>
                 }
             </div>
@@ -295,6 +319,21 @@
                                 </div>
                             </div>
                         }
+                        @if (Model.Order.Delivery.CustomerConfirmed)
+                        {
+                            <div>
+                                <div class="text-muted" style="font-size: 0.875rem; margin-bottom: 0.25rem;">Xác nhận nhận xe</div>
+                                <div style="padding: 0.75rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius-sm); color: var(--success);">
+                                    <i class="bi bi-check-circle"></i> Đã xác nhận nhận xe
+                                    @if (Model.Order.Delivery.CustomerConfirmedDate.HasValue)
+                                    {
+                                        <div style="font-size: 0.875rem; margin-top: 0.25rem;">
+                                            @Model.Order.Delivery.CustomerConfirmedDate.Value.ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
                         @if (!string.IsNullOrEmpty(Model.Order.Delivery.HandoverNote))
                         {
                             <div>
@@ -302,6 +341,20 @@
                                 <div style="padding: 0.75rem; background: var(--black); border-radius: var(--radius-sm);">
                                     @Model.Order.Delivery.HandoverNote
                                 </div>
+                            </div>
+                        }
+                        @if (Model.Order.Delivery.Status == "IN_TRANSIT" && !Model.Order.Delivery.CustomerConfirmed)
+                        {
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                                <p style="margin-bottom: 0.75rem; color: var(--text-muted);">
+                                    Vui lòng xác nhận bạn đã nhận được xe để hoàn tất quá trình giao hàng.
+                                </p>
+                                <form method="post" asp-page-handler="ConfirmReceipt" style="margin: 0;">
+                                    <input type="hidden" name="id" value="@Model.Order.Id" />
+                                    <button type="submit" class="btn btn-success" onclick="return confirm('Bạn có chắc chắn đã nhận được xe?')" style="width: 100%;">
+                                        <i class="bi bi-check-circle"></i> Xác nhận đã nhận xe
+                                    </button>
+                                </form>
                             </div>
                         }
                     </div>
