@@ -2,16 +2,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.DAL.Models;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Admin.Reports
 {
-    public class SalesByVehicleModel : PageModel
+    public class SalesByVehicleModel : AdminPageModel
     {
-        private readonly ApplicationDbContext _context;
-
-        public SalesByVehicleModel(ApplicationDbContext context)
+        public SalesByVehicleModel(
+            ApplicationDbContext context,
+            IAuthorizationService authorizationService)
+            : base(context, authorizationService)
         {
-            _context = context;
         }
 
         public int TotalSold { get; set; }
@@ -23,62 +25,61 @@ namespace Vehicle_Dealer_Management.Pages.Admin.Reports
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var userId = HttpContext.Session.GetString("UserId");
-            if (string.IsNullOrEmpty(userId))
+            var authResult = await CheckAuthorizationAsync();
+            if (authResult != null)
+                return authResult;
+
+            SetViewData();
+
+            // Get sales data from SalesDocumentLines for paid/delivered orders
+            var vehicleSalesData = await _context.SalesDocumentLines
+                .Include(sdl => sdl.SalesDocument)
+                .Include(sdl => sdl.Vehicle)
+                .Where(sdl => sdl.SalesDocument != null && 
+                              sdl.SalesDocument.Type == "ORDER" &&
+                              (sdl.SalesDocument.Status == "PAID" || sdl.SalesDocument.Status == "DELIVERED"))
+                .GroupBy(sdl => sdl.VehicleId)
+                .Select(g => new
+                {
+                    VehicleId = g.Key,
+                    QuantitySold = g.Sum(sdl => (int)sdl.Qty),
+                    Revenue = g.Sum(sdl => (sdl.UnitPrice * sdl.Qty) - sdl.DiscountValue),
+                    FirstLine = g.First()
+                })
+                .ToListAsync();
+
+            // Get vehicle details and build report
+            VehicleReports = new List<VehicleReportViewModel>();
+            
+            foreach (var saleData in vehicleSalesData.OrderByDescending(s => s.Revenue))
             {
-                return RedirectToPage("/Auth/Login");
+                var vehicle = saleData.FirstLine.Vehicle;
+                if (vehicle == null) continue;
+
+                // Determine sales speed based on quantity sold
+                var speed = "SLOW";
+                if (saleData.QuantitySold > 50)
+                    speed = "FAST";
+                else if (saleData.QuantitySold > 20)
+                    speed = "MEDIUM";
+
+                var avgPrice = saleData.QuantitySold > 0 
+                    ? saleData.Revenue / saleData.QuantitySold 
+                    : 0;
+
+                VehicleReports.Add(new VehicleReportViewModel
+                {
+                    ModelName = vehicle.ModelName,
+                    VariantName = vehicle.VariantName,
+                    ImageUrl = vehicle.ImageUrl ?? "",
+                    QuantitySold = saleData.QuantitySold,
+                    Revenue = saleData.Revenue,
+                    AvgPrice = avgPrice,
+                    Speed = speed
+                });
             }
 
-            // Get all vehicles
-            var vehicles = await _context.Vehicles.ToListAsync();
-
-            // Mock sales data for each vehicle
-            VehicleReports = new List<VehicleReportViewModel>
-            {
-                new() 
-                { 
-                    ModelName = "Model 3", 
-                    VariantName = "Standard", 
-                    ImageUrl = "https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800",
-                    QuantitySold = 125, 
-                    Revenue = 187500000000, 
-                    Speed = "FAST" 
-                },
-                new() 
-                { 
-                    ModelName = "Model S", 
-                    VariantName = "Premium", 
-                    ImageUrl = "https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800",
-                    QuantitySold = 85, 
-                    Revenue = 212500000000, 
-                    Speed = "FAST" 
-                },
-                new() 
-                { 
-                    ModelName = "Model X", 
-                    VariantName = "Performance", 
-                    ImageUrl = "https://giaxeoto.vn/admin/upload/images/resize/640-van-hanh-xe-tesla-model-x.jpg",
-                    QuantitySold = 42, 
-                    Revenue = 147000000000, 
-                    Speed = "MEDIUM" 
-                },
-                new() 
-                { 
-                    ModelName = "Model Y", 
-                    VariantName = "Long Range", 
-                    ImageUrl = "https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800",
-                    QuantitySold = 28, 
-                    Revenue = 56000000000, 
-                    Speed = "SLOW" 
-                }
-            };
-
-            // Calculate avg price
-            foreach (var vehicle in VehicleReports)
-            {
-                vehicle.AvgPrice = vehicle.QuantitySold > 0 ? vehicle.Revenue / vehicle.QuantitySold : 0;
-            }
-
+            // Calculate totals
             TotalSold = VehicleReports.Sum(v => v.QuantitySold);
             TotalRevenue = VehicleReports.Sum(v => v.Revenue);
             TopVehicle = VehicleReports.OrderByDescending(v => v.QuantitySold).FirstOrDefault()?.ModelName ?? "N/A";

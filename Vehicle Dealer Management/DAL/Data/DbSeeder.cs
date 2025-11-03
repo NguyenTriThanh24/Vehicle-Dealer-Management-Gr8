@@ -83,7 +83,7 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         Email = "customer@test.com",
                         PasswordHash = HashPassword("123456"),
-                        FullName = "Nguyễn Văn Khách",
+                        FullName = "Khách Hàng",
                         Phone = "0901234567",
                         RoleId = roles.First(r => r.Code == "CUSTOMER").Id,
                         DealerId = null,
@@ -94,7 +94,7 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         Email = "dealerstaff@test.com",
                         PasswordHash = HashPassword("123456"),
-                        FullName = "Trần Thị Nhân Viên",
+                        FullName = "Dealer Staff",
                         Phone = "0902345678",
                         RoleId = roles.First(r => r.Code == "DEALER_STAFF").Id,
                         DealerId = dealers.First().Id,
@@ -105,7 +105,7 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         Email = "dealermanager@test.com",
                         PasswordHash = HashPassword("123456"),
-                        FullName = "Lê Văn Quản Lý",
+                        FullName = "Dealer Manager",
                         Phone = "0903456789",
                         RoleId = roles.First(r => r.Code == "DEALER_MANAGER").Id,
                         DealerId = dealers.First().Id,
@@ -116,7 +116,7 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         Email = "evmstaff@test.com",
                         PasswordHash = HashPassword("123456"),
-                        FullName = "Phạm Thị Nhân Viên Hãng",
+                        FullName = "EVM Staff",
                         Phone = "0904567890",
                         RoleId = roles.First(r => r.Code == "EVM_STAFF").Id,
                         DealerId = null,
@@ -127,7 +127,7 @@ namespace Vehicle_Dealer_Management.DAL.Data
                     {
                         Email = "admin@test.com",
                         PasswordHash = HashPassword("123456"),
-                        FullName = "Hoàng Văn Admin",
+                        FullName = "Admin",
                         Phone = "0905678901",
                         RoleId = roles.First(r => r.Code == "EVM_ADMIN").Id,
                         DealerId = null,

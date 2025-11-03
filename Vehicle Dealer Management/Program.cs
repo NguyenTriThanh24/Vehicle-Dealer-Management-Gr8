@@ -51,6 +51,7 @@ builder.Services.AddScoped<ITestDriveService, TestDriveService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 
 var app = builder.Build();
 

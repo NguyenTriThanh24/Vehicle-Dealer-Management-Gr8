@@ -2,8 +2,6 @@
 @model Vehicle_Dealer_Management.Pages.Admin.Reports.ConsumptionModel
 @{
     ViewData["Title"] = "Phân tích tốc độ tiêu thụ";
-    ViewData["UserRole"] = "EVM_ADMIN";
-    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "Admin";
 }
 
 <div class="content-header">
@@ -41,11 +39,8 @@
         <h3 class="card-title mb-0">Tốc độ tiêu thụ theo xe</h3>
     </div>
     <div class="card-body">
-        <div class="chart-container">
-            <div class="chart-placeholder">
-                <i class="bi bi-speedometer2" style="font-size: 4rem; opacity: 0.3;"></i>
-                <p>Biểu đồ line chart (Chart.js placeholder)</p>
-            </div>
+        <div class="chart-container" style="position: relative; height: 400px;">
+            <canvas id="consumptionChart"></canvas>
         </div>
     </div>
 </div>
@@ -141,4 +136,148 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Consumption Line Chart
+        @if (Model.ConsumptionData.Any())
+        {
+            <text>
+            const consumptionCtx = document.getElementById('consumptionChart');
+            const consumptionData = @Html.Raw(Json.Serialize(Model.ConsumptionData.OrderByDescending(c => c.WeeklyRate).Take(10).Select(c => new { 
+                label = c.VehicleName,
+                weeklyRate = c.WeeklyRate,
+                sold30Days = c.SoldLast30Days,
+                currentStock = c.CurrentStock
+            })));
+            
+            new Chart(consumptionCtx, {
+                type: 'line',
+                data: {
+                    labels: consumptionData.map(v => v.label),
+                    datasets: [
+                        {
+                            label: 'Tốc độ tiêu thụ (xe/tuần)',
+                            data: consumptionData.map(v => v.weeklyRate),
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Đã bán (30 ngày)',
+                            data: consumptionData.map(v => v.sold30Days),
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    if (context.datasetIndex === 0) {
+                                        return label + ': ' + value.toFixed(1) + ' xe/tuần';
+                                    } else {
+                                        return label + ': ' + value + ' xe';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'rgba(59, 130, 246, 0.9)',
+                                callback: function(value) {
+                                    return value.toFixed(1) + ' xe/tuần';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tốc độ tiêu thụ (xe/tuần)',
+                                color: 'rgba(59, 130, 246, 0.9)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            ticks: {
+                                color: 'rgba(34, 197, 94, 0.9)',
+                                callback: function(value) {
+                                    return value + ' xe';
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Đã bán (30 ngày)',
+                                color: 'rgba(34, 197, 94, 0.9)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+        else
+        {
+            <text>
+            const chartContainer = document.getElementById('consumptionChart');
+            if (chartContainer) {
+                chartContainer.parentElement.innerHTML = 
+                    '<div class="chart-placeholder"><i class="bi bi-speedometer2" style="font-size: 4rem; opacity: 0.3;"></i><p>Chưa có dữ liệu</p></div>';
+            }
+            </text>
+        }
+    </script>
+}
 

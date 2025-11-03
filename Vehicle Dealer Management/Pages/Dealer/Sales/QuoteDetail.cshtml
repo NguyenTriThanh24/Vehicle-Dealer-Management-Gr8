@@ -17,7 +17,7 @@
             <a href="/Dealer/Sales/Quotes" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Quay lại
             </a>
-            @if (Model.Quote.Status == "DRAFT" || Model.Quote.Status == "SENT" || Model.Quote.Status == "ACCEPTED")
+            @if ((Model.Quote.Status == "DRAFT" || Model.Quote.Status == "SENT" || Model.Quote.Status == "ACCEPTED") && !Model.Quote.IsConverted)
             {
                 <form method="post" asp-page-handler="ConvertToOrder" style="display: inline;">
                     <input type="hidden" name="id" value="@Model.Quote.Id" />
@@ -183,7 +183,7 @@
             </div>
             <div class="card-body">
                 <div class="grid grid-cols-1 gap-2">
-                    @if (Model.Quote.Status == "DRAFT" || Model.Quote.Status == "SENT" || Model.Quote.Status == "ACCEPTED")
+                    @if ((Model.Quote.Status == "DRAFT" || Model.Quote.Status == "SENT" || Model.Quote.Status == "ACCEPTED") && !Model.Quote.IsConverted)
                     {
                         <form method="post" asp-page-handler="ConvertToOrder" style="width: 100%;">
                             <input type="hidden" name="id" value="@Model.Quote.Id" />
@@ -194,6 +194,12 @@
                         <a href="/Dealer/Sales/EditQuote?id=@Model.Quote.Id" class="btn btn-secondary" style="width: 100%;">
                             <i class="bi bi-pencil"></i> Chỉnh sửa báo giá
                         </a>
+                    }
+                    @if (Model.Quote.IsConverted || Model.Quote.Status == "CONVERTED")
+                    {
+                        <div class="alert alert-info" style="width: 100%; margin-bottom: 0.5rem;">
+                            <i class="bi bi-info-circle"></i> Báo giá này đã được chuyển thành đơn hàng. Không thể chuyển đổi lại.
+                        </div>
                     }
                     <button class="btn btn-secondary" onclick="window.print()" style="width: 100%;">
                         <i class="bi bi-printer"></i> In báo giá

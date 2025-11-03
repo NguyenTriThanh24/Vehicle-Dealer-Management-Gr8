@@ -43,6 +43,9 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 return NotFound();
             }
 
+            // Check if quote has already been converted (for UI display)
+            var isConverted = await CheckIfQuoteConvertedAsync(quote);
+
             // Calculate totals from real data
             var totalAmount = quote.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0;
 
@@ -53,6 +56,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 Status = quote.Status,
                 CreatedAt = quote.CreatedAt,
                 UpdatedAt = quote.UpdatedAt,
+                IsConverted = isConverted,
 
                 // Customer Info
                 CustomerId = quote.CustomerId,
@@ -124,6 +128,59 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 return RedirectToPage(new { id });
             }
 
+            // Check if quote has already been converted to order
+            // Look for existing orders with same customer, dealer, and matching lines
+            var existingOrders = await _context.SalesDocuments
+                .Include(o => o.Lines)
+                .Where(o => o.Type == "ORDER" 
+                    && o.DealerId == quote.DealerId 
+                    && o.CustomerId == quote.CustomerId
+                    && o.CreatedAt >= quote.CreatedAt.AddHours(-24)) // Orders created within 24 hours of quote creation/update
+                .ToListAsync();
+
+            foreach (var existingOrder in existingOrders)
+            {
+                // Check if order lines match quote lines
+                if (existingOrder.Lines != null && quote.Lines != null)
+                {
+                    var orderLinesList = existingOrder.Lines.ToList();
+                    var quoteLinesList = quote.Lines.ToList();
+
+                    if (orderLinesList.Count == quoteLinesList.Count)
+                    {
+                        bool allLinesMatch = true;
+                        foreach (var quoteLine in quoteLinesList)
+                        {
+                            var matchingOrderLine = orderLinesList.FirstOrDefault(ol =>
+                                ol.VehicleId == quoteLine.VehicleId
+                                && ol.ColorCode == quoteLine.ColorCode
+                                && ol.Qty == quoteLine.Qty
+                                && ol.UnitPrice == quoteLine.UnitPrice
+                                && ol.DiscountValue == quoteLine.DiscountValue);
+
+                            if (matchingOrderLine == null)
+                            {
+                                allLinesMatch = false;
+                                break;
+                            }
+                        }
+
+                        if (allLinesMatch)
+                        {
+                            TempData["Error"] = $"Báo giá này đã được chuyển thành đơn hàng #{existingOrder.Id} rồi. Không thể chuyển đổi lại.";
+                            return RedirectToPage(new { id });
+                        }
+                    }
+                }
+            }
+
+            // Also check if quote status is already CONVERTED
+            if (quote.Status == "CONVERTED")
+            {
+                TempData["Error"] = "Báo giá này đã được chuyển thành đơn hàng rồi. Không thể chuyển đổi lại.";
+                return RedirectToPage(new { id });
+            }
+
             // Create new Order from Quote
             var order = new Vehicle_Dealer_Management.DAL.Models.SalesDocument
             {
@@ -159,14 +216,75 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
                 }
             }
 
-            // Update quote status to indicate it's been converted (optional - có thể giữ nguyên hoặc mark as CONVERTED)
-            // quote.Status = "CONVERTED"; // Nếu có status này
+            // Update quote status to indicate it's been converted to prevent duplicate conversions
+            quote.Status = "CONVERTED";
             quote.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
             TempData["Success"] = "Chuyển đổi báo giá thành đơn hàng thành công!";
             return RedirectToPage("/Dealer/Sales/OrderDetail", new { id = order.Id });
+        }
+
+        private async Task<bool> CheckIfQuoteConvertedAsync(DAL.Models.SalesDocument quote)
+        {
+            // Check if status is already CONVERTED
+            if (quote.Status == "CONVERTED")
+            {
+                return true;
+            }
+
+            // Check if there's an existing order created from this quote
+            // Look for orders with same customer, dealer, and matching lines
+            var existingOrders = await _context.SalesDocuments
+                .Include(o => o.Lines)
+                .Where(o => o.Type == "ORDER" 
+                    && o.DealerId == quote.DealerId 
+                    && o.CustomerId == quote.CustomerId
+                    && o.CreatedAt >= quote.CreatedAt.AddHours(-24)) // Orders created within 24 hours of quote creation/update
+                .ToListAsync();
+
+            if (quote.Lines == null || !quote.Lines.Any())
+            {
+                return false;
+            }
+
+            var quoteLinesList = quote.Lines.ToList();
+
+            foreach (var existingOrder in existingOrders)
+            {
+                if (existingOrder.Lines != null)
+                {
+                    var orderLinesList = existingOrder.Lines.ToList();
+
+                    if (orderLinesList.Count == quoteLinesList.Count)
+                    {
+                        bool allLinesMatch = true;
+                        foreach (var quoteLine in quoteLinesList)
+                        {
+                            var matchingOrderLine = orderLinesList.FirstOrDefault(ol =>
+                                ol.VehicleId == quoteLine.VehicleId
+                                && ol.ColorCode == quoteLine.ColorCode
+                                && ol.Qty == quoteLine.Qty
+                                && ol.UnitPrice == quoteLine.UnitPrice
+                                && ol.DiscountValue == quoteLine.DiscountValue);
+
+                            if (matchingOrderLine == null)
+                            {
+                                allLinesMatch = false;
+                                break;
+                            }
+                        }
+
+                        if (allLinesMatch)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         public class QuoteDetailViewModel
@@ -176,6 +294,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer.Sales
             public string Status { get; set; } = "";
             public DateTime CreatedAt { get; set; }
             public DateTime? UpdatedAt { get; set; }
+            public bool IsConverted { get; set; }
 
             // Customer
             public int CustomerId { get; set; }

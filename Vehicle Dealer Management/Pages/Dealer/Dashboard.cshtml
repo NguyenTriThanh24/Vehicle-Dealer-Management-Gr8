@@ -145,7 +145,7 @@
 <div class="grid grid-cols-2">
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title mb-0">Lịch lái thử hôm nay</h3>
+            <h3 class="card-title mb-0">Lịch lái thử sắp tới</h3>
         </div>
         <div class="card-body">
             @if (Model.TodayTestDrives.Any())
@@ -167,7 +167,7 @@
             {
                 <div class="empty-state">
                     <div class="empty-state-icon">📅</div>
-                    <div class="empty-state-text">Không có lịch lái thử hôm nay</div>
+                    <div class="empty-state-text">Không có lịch lái thử sắp tới</div>
                 </div>
             }
         </div>
@@ -186,9 +186,12 @@
                         <div>
                             <div><strong>#@quote.Id - @quote.CustomerName</strong></div>
                             <div class="text-muted" style="font-size: 0.875rem;">@quote.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            <div style="margin-top: 0.25rem;">
+                                @await Html.PartialAsync("_StatusBadge", quote.Status)
+                            </div>
                         </div>
                         <div>
-                            <a href="/Dealer/Sales/QuoteDetail?id=@quote.Id" class="btn btn-primary btn-sm">Gửi</a>
+                            <a href="/Dealer/Sales/QuoteDetail?id=@quote.Id" class="btn btn-primary btn-sm">Chi tiết</a>
                         </div>
                     </div>
                 }

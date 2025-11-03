@@ -83,49 +83,50 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 .Take(5)
                 .ToList();
 
-            RecentOrders = (await Task.WhenAll(recentOrders.Select(async o =>
+            // Customer is already included in the query from SalesDocumentRepository
+            RecentOrders = recentOrders.Select(o => new OrderViewModel
             {
-                var customer = await _customerService.GetCustomerByIdAsync(o.CustomerId);
-                return new OrderViewModel
-                {
-                    Id = o.Id,
-                    CustomerName = customer?.FullName ?? "N/A",
-                    CreatedAt = o.CreatedAt,
-                    Status = o.Status,
-                    TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0
-                };
-            }))).ToList();
+                Id = o.Id,
+                CustomerName = o.Customer?.FullName ?? "N/A",
+                CreatedAt = o.CreatedAt,
+                Status = o.Status,
+                TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0
+            }).ToList();
 
-            // Get today's test drives using service
+            // Get test drives for today and upcoming (not completed/cancelled)
+            // Use local date since ScheduleTime is stored as local time for appointments
             var today = DateTime.Today;
-            var testDrives = await _testDriveService.GetTestDrivesByDealerAndDateAsync(dealerIdInt, today);
-            var testDrivesList = testDrives.ToList();
+            var allTestDrives = await _testDriveService.GetTestDrivesByDealerIdAsync(dealerIdInt);
+            var activeTestDrives = allTestDrives
+                .Where(t => t.ScheduleTime.Date >= today && 
+                           (t.Status == "REQUESTED" || t.Status == "CONFIRMED"))
+                .OrderBy(t => t.ScheduleTime)
+                .Take(5)
+                .ToList();
 
-            TodayTestDrives = testDrivesList.Select(t => new TestDriveViewModel
+            TodayTestDrives = activeTestDrives.Select(t => new TestDriveViewModel
             {
                 CustomerName = t.Customer?.FullName ?? "N/A",
                 VehicleName = $"{t.Vehicle?.ModelName} {t.Vehicle?.VariantName}",
-                Time = t.ScheduleTime.ToString("HH:mm"),
+                Time = t.ScheduleTime.ToString("dd/MM HH:mm"),
                 Status = t.Status
             }).ToList();
 
-            // Get pending quotes
+            // Get pending quotes (all quotes that need attention, excluding REJECTED and CONVERTED)
+            // Customer is already included in the query from SalesDocumentRepository
             var pendingQuotes = allQuotes
-                .Where(q => q.Status == "DRAFT")
+                .Where(q => q.Status != "REJECTED" && q.Status != "CONVERTED")
                 .OrderByDescending(s => s.CreatedAt)
                 .Take(5)
                 .ToList();
 
-            PendingQuotesList = (await Task.WhenAll(pendingQuotes.Select(async q =>
+            PendingQuotesList = pendingQuotes.Select(q => new QuoteViewModel
             {
-                var customer = await _customerService.GetCustomerByIdAsync(q.CustomerId);
-                return new QuoteViewModel
-                {
-                    Id = q.Id,
-                    CustomerName = customer?.FullName ?? "N/A",
-                    CreatedAt = q.CreatedAt
-                };
-            }))).ToList();
+                Id = q.Id,
+                CustomerName = q.Customer?.FullName ?? "N/A",
+                CreatedAt = q.CreatedAt,
+                Status = q.Status
+            }).ToList();
 
             // Get total unique customers
             var uniqueCustomerIds = allOrders.Select(o => o.CustomerId).Union(allQuotes.Select(q => q.CustomerId)).Distinct();
@@ -156,6 +157,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             public int Id { get; set; }
             public string CustomerName { get; set; } = "";
             public DateTime CreatedAt { get; set; }
+            public string Status { get; set; } = "";
         }
     }
 }

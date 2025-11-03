@@ -2,16 +2,17 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Admin.Reports
 {
-    public class InventoryModel : PageModel
+    public class InventoryModel : AdminPageModel
     {
-        private readonly ApplicationDbContext _context;
-
-        public InventoryModel(ApplicationDbContext context)
+        public InventoryModel(
+            ApplicationDbContext context,
+            IAuthorizationService authorizationService)
+            : base(context, authorizationService)
         {
-            _context = context;
         }
 
         public int TotalInventory { get; set; }
@@ -27,11 +28,11 @@ namespace Vehicle_Dealer_Management.Pages.Admin.Reports
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var userId = HttpContext.Session.GetString("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToPage("/Auth/Login");
-            }
+            var authResult = await CheckAuthorizationAsync();
+            if (authResult != null)
+                return authResult;
+
+            SetViewData();
 
             // Get all stocks
             var stocks = await _context.Stocks

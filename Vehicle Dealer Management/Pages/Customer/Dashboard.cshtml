@@ -77,6 +77,7 @@
                             <th>Ngày tạo</th>
                             <th>Trạng thái</th>
                             <th>Tổng tiền</th>
+                            <th>Đã thanh toán</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -88,6 +89,7 @@
                                 <td>@order.CreatedAt.ToString("dd/MM/yyyy")</td>
                                 <td>@await Html.PartialAsync("_StatusBadge", order.Status)</td>
                                 <td><strong>@order.TotalAmount.ToString("N0") VND</strong></td>
+                                <td><strong style="color: var(--success);">@order.TotalPaid.ToString("N0") VND</strong></td>
                                 <td class="text-right">
                                     <a href="/Customer/OrderDetail?id=@order.Id" class="btn btn-secondary btn-sm">
                                         Chi tiết

@@ -2,8 +2,6 @@
 @model Vehicle_Dealer_Management.Pages.Admin.DashboardModel
 @{
     ViewData["Title"] = "Dashboard - EVM Admin";
-    ViewData["UserRole"] = "EVM_ADMIN";
-    ViewData["UserName"] = Model.UserName;
 }
 
 <div class="content-header">
@@ -19,9 +17,16 @@
             <i class="bi bi-cash-stack" style="font-size: 1.5rem; color: var(--success);"></i>
         </div>
         <div class="stat-value">@Model.MonthSales.ToString("N0")</div>
-        <div class="stat-change positive">
-            <i class="bi bi-arrow-up"></i>
-            <span>+24% so với tháng trước</span>
+        <div class="stat-change @(Model.MonthSalesChangePercent >= 0 ? "positive" : "negative")">
+            @if (Model.MonthSalesChangePercent >= 0)
+            {
+                <i class="bi bi-arrow-up"></i>
+            }
+            else
+            {
+                <i class="bi bi-arrow-down"></i>
+            }
+            <span>@(Model.MonthSalesChangePercent >= 0 ? "+" : "")@Model.MonthSalesChangePercent.ToString("F1")% so với tháng trước</span>
         </div>
     </div>
 
@@ -31,9 +36,17 @@
             <i class="bi bi-car-front" style="font-size: 1.5rem; color: var(--accent-cyan);"></i>
         </div>
         <div class="stat-value">@Model.TotalSoldVehicles</div>
-        <div class="stat-change positive">
-            <i class="bi bi-arrow-up"></i>
-            <span>+18 xe trong tuần</span>
+        <div class="stat-change @(Model.WeekSoldVehiclesChange >= 0 ? "positive" : "negative")">
+            @if (Model.WeekSoldVehiclesChange >= 0)
+            {
+                <i class="bi bi-arrow-up"></i>
+                <span>+@Model.WeekSoldVehiclesChange xe so với tuần trước (@Model.LastWeekSoldVehicles xe trong tuần)</span>
+            }
+            else
+            {
+                <i class="bi bi-arrow-down"></i>
+                <span>@Model.WeekSoldVehiclesChange xe so với tuần trước (@Model.LastWeekSoldVehicles xe trong tuần)</span>
+            }
         </div>
     </div>
 
@@ -54,9 +67,21 @@
             <i class="bi bi-box-seam" style="font-size: 1.5rem; color: var(--warning);"></i>
         </div>
         <div class="stat-value">@Model.TotalInventory</div>
-        <div class="stat-change negative">
-            <i class="bi bi-arrow-down"></i>
-            <span>-15% (bán tốt)</span>
+        <div class="stat-change @(Model.InventoryChangePercent < 0 ? "positive" : "negative")">
+            @if (Model.InventoryChangePercent < 0)
+            {
+                <i class="bi bi-arrow-down"></i>
+                <span>@Model.InventoryChangePercent.ToString("F1")% @(Math.Abs(Model.InventoryChangePercent) > 10 ? "(bán tốt)" : "")</span>
+            }
+            else if (Model.InventoryChangePercent > 0)
+            {
+                <i class="bi bi-arrow-up"></i>
+                <span>+@Model.InventoryChangePercent.ToString("F1")%</span>
+            }
+            else
+            {
+                <span>Không đổi</span>
+            }
         </div>
     </div>
 </div>
@@ -123,12 +148,21 @@
             <h3 class="card-title mb-0">Doanh số theo xe (Top 5)</h3>
         </div>
         <div class="card-body">
-            <div class="chart-container">
-                <div class="chart-placeholder">
-                    <i class="bi bi-pie-chart" style="font-size: 4rem; opacity: 0.3;"></i>
-                    <p>Biểu đồ tròn (Chart.js placeholder)</p>
-                </div>
+            <div class="chart-container" style="position: relative; height: 300px;">
+                <canvas id="vehicleSalesChart"></canvas>
             </div>
+            @if (Model.TopVehicleSales.Any())
+            {
+                <div style="margin-top: 1rem;">
+                    @foreach (var vehicle in Model.TopVehicleSales)
+                    {
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border);">
+                            <span>@vehicle.VehicleName</span>
+                            <strong>@vehicle.Revenue.ToString("N0") VND</strong>
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 
@@ -240,4 +274,83 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Vehicle Sales Pie Chart
+        @if (Model.TopVehicleSales.Any())
+        {
+            <text>
+            const vehicleSalesCtx = document.getElementById('vehicleSalesChart');
+            const vehicleSalesData = @Html.Raw(Json.Serialize(Model.TopVehicleSales.Select(v => new { 
+                label = v.VehicleName, 
+                value = v.Revenue 
+            })));
+            
+            new Chart(vehicleSalesCtx, {
+                type: 'pie',
+                data: {
+                    labels: vehicleSalesData.map(v => v.label),
+                    datasets: [{
+                        data: vehicleSalesData.map(v => v.value),
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',   // green
+                            'rgba(59, 130, 246, 0.8)',  // blue
+                            'rgba(251, 191, 36, 0.8)',  // yellow
+                            'rgba(239, 68, 68, 0.8)',   // red
+                            'rgba(139, 92, 246, 0.8)'   // purple
+                        ],
+                        borderColor: [
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(251, 191, 36, 1)',
+                            'rgba(239, 68, 68, 1)',
+                            'rgba(139, 92, 246, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'rgba(255, 255, 255, 0.9)',
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return label + ': ' + value.toLocaleString('vi-VN') + ' VND (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+        else
+        {
+            <text>
+            const chartContainer = document.getElementById('vehicleSalesChart');
+            if (chartContainer) {
+                chartContainer.parentElement.innerHTML = 
+                    '<div class="chart-placeholder"><i class="bi bi-pie-chart" style="font-size: 4rem; opacity: 0.3;"></i><p>Chưa có dữ liệu</p></div>';
+            }
+            </text>
+        }
+    </script>
+}
 

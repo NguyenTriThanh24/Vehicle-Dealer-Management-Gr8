@@ -12,7 +12,7 @@ using Vehicle_Dealer_Management.DAL.Data;
 namespace Vehicle_Dealer_Management.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251102213012_InitialCreate")]
+    [Migration("20251103144253_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

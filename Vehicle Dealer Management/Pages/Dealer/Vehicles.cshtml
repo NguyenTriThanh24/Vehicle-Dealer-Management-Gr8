@@ -12,10 +12,16 @@
             <h1 class="content-title">Danh mục xe điện</h1>
             <p class="content-subtitle">Xem thông tin xe, giá và tồn kho</p>
         </div>
-        <a href="/Dealer/Sales/CreateQuote" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i>
-            Tạo báo giá
-        </a>
+        <div class="flex gap-2">
+            <button id="compareBtn" class="btn btn-success" onclick="compareSelected()" style="display: none;">
+                <i class="bi bi-diagram-3"></i>
+                So sánh (<span id="selectedCount">0</span>)
+            </button>
+            <a href="/Dealer/Sales/CreateQuote" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i>
+                Tạo báo giá
+            </a>
+        </div>
     </div>
 </div>
 
@@ -52,16 +58,25 @@
 <div class="grid grid-cols-3 mb-4">
     @foreach (var vehicle in Model.Vehicles)
     {
-        <div class="card" style="cursor: pointer;" onclick="window.location.href='/Dealer/VehicleDetail?id=@vehicle.Id'">
-            <img src="@vehicle.ImageUrl" alt="@vehicle.Name" style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0; margin: -1.5rem -1.5rem 1rem -1.5rem;" />
-            <div class="card-body" style="padding-top: 0;">
-                <div class="flex justify-between items-start mb-2">
-                    <div>
-                        <h4 style="margin-bottom: 0.25rem;">@vehicle.Name</h4>
-                        <p class="text-muted" style="font-size: 0.875rem;">@vehicle.Variant</p>
+        <div class="card" style="position: relative;">
+            <div style="position: absolute; top: 1rem; left: 1rem; z-index: 10;">
+                <input type="checkbox" 
+                       class="vehicle-checkbox" 
+                       value="@vehicle.Id" 
+                       onchange="updateCompareButton()"
+                       style="width: 20px; height: 20px; cursor: pointer;"
+                       onclick="event.stopPropagation(); limitCheckboxes(this);" />
+            </div>
+            <div style="cursor: pointer;" onclick="window.location.href='/Dealer/VehicleDetail?id=@vehicle.Id'">
+                <img src="@vehicle.ImageUrl" alt="@vehicle.Name" style="width: 100%; height: 200px; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0; margin: -1.5rem -1.5rem 1rem -1.5rem;" />
+                <div class="card-body" style="padding-top: 0;">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 style="margin-bottom: 0.25rem;">@vehicle.Name</h4>
+                            <p class="text-muted" style="font-size: 0.875rem;">@vehicle.Variant</p>
+                        </div>
+                        @await Html.PartialAsync("_StatusBadge", vehicle.Status)
                     </div>
-                    @await Html.PartialAsync("_StatusBadge", vehicle.Status)
-                </div>
                 
                 <div style="background: var(--black); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
                     <div class="flex justify-between items-center mb-2">
@@ -87,14 +102,56 @@
                     </div>
                 </div>
 
-                <button class="btn btn-primary btn-block" onclick="event.stopPropagation(); window.location.href='/Dealer/Sales/CreateQuote?vehicleId=@vehicle.Id'">
-                    <i class="bi bi-file-text"></i>
-                    Tạo báo giá
-                </button>
+                    <button class="btn btn-primary btn-block" onclick="event.stopPropagation(); window.location.href='/Dealer/Sales/CreateQuote?vehicleId=@vehicle.Id'">
+                        <i class="bi bi-file-text"></i>
+                        Tạo báo giá
+                    </button>
+                </div>
             </div>
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function limitCheckboxes(checkbox) {
+            if (checkbox.checked) {
+                const checked = document.querySelectorAll('.vehicle-checkbox:checked');
+                if (checked.length > 4) {
+                    checkbox.checked = false;
+                    alert('Chỉ có thể chọn tối đa 4 xe để so sánh');
+                    updateCompareButton();
+                    return false;
+                }
+            }
+        }
+
+        function updateCompareButton() {
+            const checkboxes = document.querySelectorAll('.vehicle-checkbox:checked');
+            const count = checkboxes.length;
+            const compareBtn = document.getElementById('compareBtn');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (count > 0) {
+                compareBtn.style.display = 'inline-flex';
+                selectedCount.textContent = count;
+            } else {
+                compareBtn.style.display = 'none';
+            }
+        }
+
+        function compareSelected() {
+            const checkboxes = document.querySelectorAll('.vehicle-checkbox:checked');
+            const ids = Array.from(checkboxes).map(cb => cb.value).join(',');
+            
+            if (ids && checkboxes.length <= 4) {
+                window.location.href = '/Dealer/Compare?ids=' + ids;
+            } else if (checkboxes.length > 4) {
+                alert('Chỉ có thể so sánh tối đa 4 xe');
+            }
+        }
+    </script>
+}
 
 @functions {
     string GetColorHex(string color)

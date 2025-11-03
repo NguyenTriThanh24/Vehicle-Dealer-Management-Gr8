@@ -2,16 +2,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.DAL.Models;
+using Vehicle_Dealer_Management.BLL.IService;
 
 namespace Vehicle_Dealer_Management.Pages.Admin.Reports
 {
-    public class ConsumptionModel : PageModel
+    public class ConsumptionModel : AdminPageModel
     {
-        private readonly ApplicationDbContext _context;
-
-        public ConsumptionModel(ApplicationDbContext context)
+        public ConsumptionModel(
+            ApplicationDbContext context,
+            IAuthorizationService authorizationService)
+            : base(context, authorizationService)
         {
-            _context = context;
         }
 
         public decimal AvgConsumptionRate { get; set; }
@@ -23,76 +25,121 @@ namespace Vehicle_Dealer_Management.Pages.Admin.Reports
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var userId = HttpContext.Session.GetString("UserId");
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToPage("/Auth/Login");
-            }
+            var authResult = await CheckAuthorizationAsync();
+            if (authResult != null)
+                return authResult;
+
+            SetViewData();
+
+            var now = DateTime.UtcNow;
+            var thirtyDaysAgo = now.AddDays(-30);
+            var sevenDaysAgo = now.AddDays(-7);
 
             // Get all vehicles
             var vehicles = await _context.Vehicles.ToListAsync();
 
-            // Get current stocks
-            var stocks = await _context.Stocks
+            // Get current stocks (EVM stock only)
+            var evmStocksData = await _context.Stocks
+                .Where(s => s.OwnerType == "EVM")
                 .GroupBy(s => s.VehicleId)
-                .Select(g => new { VehicleId = g.Key, Stock = g.Sum(s => s.Qty) })
-                .ToDictionaryAsync(s => s.VehicleId, s => (int)s.Stock);
+                .Select(g => new { VehicleId = g.Key, Stock = g.Sum(s => (int)s.Qty) })
+                .ToListAsync();
 
-            // Mock consumption data
-            ConsumptionData = new List<ConsumptionDataViewModel>
+            var evmStocks = evmStocksData.ToDictionary(s => s.VehicleId, s => s.Stock);
+
+            // Get sales in last 30 days
+            var salesLast30Days = await _context.SalesDocumentLines
+                .Include(sdl => sdl.SalesDocument)
+                .Include(sdl => sdl.Vehicle)
+                .Where(sdl => sdl.SalesDocument != null &&
+                              sdl.SalesDocument.Type == "ORDER" &&
+                              (sdl.SalesDocument.Status == "PAID" || sdl.SalesDocument.Status == "DELIVERED") &&
+                              sdl.SalesDocument.CreatedAt >= thirtyDaysAgo &&
+                              sdl.SalesDocument.CreatedAt < now)
+                .GroupBy(sdl => sdl.VehicleId)
+                .Select(g => new
+                {
+                    VehicleId = g.Key,
+                    SoldLast30Days = g.Sum(sdl => (int)sdl.Qty)
+                })
+                .ToListAsync();
+
+            // Get sales in last 7 days for weekly rate
+            var salesLast7Days = await _context.SalesDocumentLines
+                .Include(sdl => sdl.SalesDocument)
+                .Where(sdl => sdl.SalesDocument != null &&
+                              sdl.SalesDocument.Type == "ORDER" &&
+                              (sdl.SalesDocument.Status == "PAID" || sdl.SalesDocument.Status == "DELIVERED") &&
+                              sdl.SalesDocument.CreatedAt >= sevenDaysAgo &&
+                              sdl.SalesDocument.CreatedAt < now)
+                .GroupBy(sdl => sdl.VehicleId)
+                .Select(g => new
+                {
+                    VehicleId = g.Key,
+                    SoldLast7Days = g.Sum(sdl => (int)sdl.Qty)
+                })
+                .ToListAsync();
+
+            var sales30DaysDict = salesLast30Days.ToDictionary(s => s.VehicleId, s => s.SoldLast30Days);
+            var sales7DaysDict = salesLast7Days.ToDictionary(s => s.VehicleId, s => s.SoldLast7Days);
+
+            // Build consumption data
+            ConsumptionData = new List<ConsumptionDataViewModel>();
+
+            foreach (var vehicle in vehicles)
             {
-                new() 
-                { 
-                    VehicleName = "Model 3 Standard", 
-                    SoldLast30Days = 65, 
-                    CurrentStock = 27, 
-                    WeeklyRate = 15.2m,
-                    DaysToEmpty = 13,
-                    Speed = "FAST"
-                },
-                new() 
-                { 
-                    VehicleName = "Model S Premium", 
-                    SoldLast30Days = 48, 
-                    CurrentStock = 18, 
-                    WeeklyRate = 11.2m,
-                    DaysToEmpty = 11,
-                    Speed = "FAST"
-                },
-                new() 
-                { 
-                    VehicleName = "Model X Performance", 
-                    SoldLast30Days = 32, 
-                    CurrentStock = 13, 
-                    WeeklyRate = 7.5m,
-                    DaysToEmpty = 12,
-                    Speed = "MEDIUM"
-                },
-                new() 
-                { 
-                    VehicleName = "Model Y Long Range", 
-                    SoldLast30Days = 18, 
-                    CurrentStock = 58, 
-                    WeeklyRate = 4.2m,
-                    DaysToEmpty = 97,
-                    Speed = "SLOW"
-                },
-                new() 
-                { 
-                    VehicleName = "Cybertruck", 
-                    SoldLast30Days = 5, 
-                    CurrentStock = 42, 
-                    WeeklyRate = 1.2m,
-                    DaysToEmpty = null,
-                    Speed = "SLOW"
+                var sold30Days = sales30DaysDict.ContainsKey(vehicle.Id) ? sales30DaysDict[vehicle.Id] : 0;
+                var sold7Days = sales7DaysDict.ContainsKey(vehicle.Id) ? sales7DaysDict[vehicle.Id] : 0;
+                var currentStock = evmStocks.ContainsKey(vehicle.Id) ? evmStocks[vehicle.Id] : 0;
+
+                // Calculate weekly rate (from last 7 days)
+                var weeklyRate = (decimal)sold7Days;
+
+                // Calculate days to empty (if weekly rate > 0)
+                int? daysToEmpty = null;
+                if (weeklyRate > 0 && currentStock > 0)
+                {
+                    daysToEmpty = (int)Math.Ceiling((currentStock / weeklyRate) * 7);
                 }
-            };
+
+                // Determine speed category
+                var speed = "SLOW";
+                if (weeklyRate > 10 || (sold30Days > 40 && currentStock < 20))
+                    speed = "FAST";
+                else if (weeklyRate > 5 || (sold30Days > 20 && currentStock < 30))
+                    speed = "MEDIUM";
+
+                // Only include vehicles that have sales or stock
+                if (sold30Days > 0 || currentStock > 0)
+                {
+                    ConsumptionData.Add(new ConsumptionDataViewModel
+                    {
+                        VehicleName = $"{vehicle.ModelName} {vehicle.VariantName}",
+                        SoldLast30Days = sold30Days,
+                        CurrentStock = currentStock,
+                        WeeklyRate = weeklyRate,
+                        DaysToEmpty = daysToEmpty,
+                        Speed = speed
+                    });
+                }
+            }
+
+            // Order by weekly rate descending
+            ConsumptionData = ConsumptionData.OrderByDescending(c => c.WeeklyRate).ToList();
 
             // Calculate summary
-            AvgConsumptionRate = ConsumptionData.Average(c => c.WeeklyRate);
-            FastMovingCount = ConsumptionData.Count(c => c.Speed == "FAST");
-            SlowMovingCount = ConsumptionData.Count(c => c.Speed == "SLOW");
-            AvgDaysToEmpty = (int)ConsumptionData.Where(c => c.DaysToEmpty.HasValue).Average(c => c.DaysToEmpty ?? 0);
+            if (ConsumptionData.Any())
+            {
+                AvgConsumptionRate = ConsumptionData.Average(c => c.WeeklyRate);
+                FastMovingCount = ConsumptionData.Count(c => c.Speed == "FAST");
+                SlowMovingCount = ConsumptionData.Count(c => c.Speed == "SLOW");
+                
+                var daysToEmptyValues = ConsumptionData.Where(c => c.DaysToEmpty.HasValue).Select(c => c.DaysToEmpty!.Value).ToList();
+                if (daysToEmptyValues.Any())
+                {
+                    AvgDaysToEmpty = (int)daysToEmptyValues.Average();
+                }
+            }
 
             return Page();
         }

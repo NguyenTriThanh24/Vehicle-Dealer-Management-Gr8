@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
 using Vehicle_Dealer_Management.BLL.IService;
+using Vehicle_Dealer_Management.BLL.Constants;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -84,15 +85,8 @@ namespace Vehicle_Dealer_Management.Pages.Auth
                 ipAddress: ipAddress);
 
             // Redirect based on role
-            return user.Role.Code switch
-            {
-                "CUSTOMER" => RedirectToPage("/Customer/Dashboard"),
-                "DEALER_STAFF" => RedirectToPage("/Dealer/Dashboard"),
-                "DEALER_MANAGER" => RedirectToPage("/DealerManager/Dashboard"),
-                "EVM_STAFF" => RedirectToPage("/EVM/Dashboard"),
-                "EVM_ADMIN" => RedirectToPage("/Admin/Dashboard"),
-                _ => RedirectToPage("/Index")
-            };
+            var dashboardPath = RoleConstants.GetDashboardPath(user.Role.Code);
+            return RedirectToPage(dashboardPath);
         }
 
         private static string HashPassword(string password)

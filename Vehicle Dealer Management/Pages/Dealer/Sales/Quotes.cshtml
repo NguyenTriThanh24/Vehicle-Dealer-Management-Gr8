@@ -18,6 +18,46 @@
     </div>
 </div>
 
+<!-- Stats -->
+<div class="grid grid-cols-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-label">Tổng số</div>
+        <div class="stat-value">@Model.TotalCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Đã gửi</div>
+        <div class="stat-value" style="color: var(--info);">@Model.SentCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Đã chấp nhận</div>
+        <div class="stat-value" style="color: var(--success);">@Model.AcceptedCount</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Đã từ chối</div>
+        <div class="stat-value" style="color: var(--error);">@Model.RejectedCount</div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="card mb-4">
+    <div class="card-body" style="padding: 0;">
+        <div style="display: flex; border-bottom: 1px solid var(--border);">
+            <a href="?status=all" class="tab-btn @(Model.StatusFilter == "all" ? "active" : "")" style="padding: 1rem 2rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "all" ? "var(--accent-cyan)" : "transparent");">
+                Tất cả (@Model.TotalCount)
+            </a>
+            <a href="?status=SENT" class="tab-btn @(Model.StatusFilter == "SENT" ? "active" : "")" style="padding: 1rem 2rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "SENT" ? "var(--accent-cyan)" : "transparent");">
+                Đã gửi (@Model.SentCount)
+            </a>
+            <a href="?status=ACCEPTED" class="tab-btn @(Model.StatusFilter == "ACCEPTED" ? "active" : "")" style="padding: 1rem 2rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "ACCEPTED" ? "var(--accent-cyan)" : "transparent");">
+                Đã chấp nhận (@Model.AcceptedCount)
+            </a>
+            <a href="?status=REJECTED" class="tab-btn @(Model.StatusFilter == "REJECTED" ? "active" : "")" style="padding: 1rem 2rem; text-decoration: none; color: inherit; border-bottom: 2px solid @(Model.StatusFilter == "REJECTED" ? "var(--accent-cyan)" : "transparent");">
+                Đã từ chối (@Model.RejectedCount)
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <div class="card-body">
         <div class="table-container">
@@ -44,7 +84,9 @@
                                 <td>@await Html.PartialAsync("_StatusBadge", quote.Status)</td>
                                 <td><strong>@quote.Total.ToString("N0") VND</strong></td>
                                 <td class="text-right">
-                                    <a href="#" class="btn btn-secondary btn-sm">Chi tiết</a>
+                                    <a href="/Dealer/Sales/QuoteDetail?id=@quote.Id" class="btn btn-secondary btn-sm">
+                                        <i class="bi bi-eye"></i> Chi tiết
+                                    </a>
                                 </td>
                             </tr>
                         }

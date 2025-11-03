@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Vehicle_Dealer_Management.DAL.Data;
+using Vehicle_Dealer_Management.BLL.Constants;
 
 namespace Vehicle_Dealer_Management.Pages.Auth
 {
@@ -31,15 +32,8 @@ namespace Vehicle_Dealer_Management.Pages.Auth
 
                 if (user != null)
                 {
-                    return user.Role.Code switch
-                    {
-                        "CUSTOMER" => RedirectToPage("/Customer/Dashboard"),
-                        "DEALER_STAFF" => RedirectToPage("/Dealer/Dashboard"),
-                        "DEALER_MANAGER" => RedirectToPage("/DealerManager/Dashboard"),
-                        "EVM_STAFF" => RedirectToPage("/EVM/Dashboard"),
-                        "EVM_ADMIN" => RedirectToPage("/Admin/Dashboard"),
-                        _ => Page()
-                    };
+                    var dashboardPath = RoleConstants.GetDashboardPath(user.Role.Code);
+                    return RedirectToPage(dashboardPath);
                 }
             }
 

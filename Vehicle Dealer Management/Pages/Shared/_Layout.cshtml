@@ -1,5 +1,6 @@
-﻿@{
-    var userRole = ViewData["UserRole"]?.ToString() ?? "CUSTOMER";
+﻿@using Vehicle_Dealer_Management.BLL.Constants
+@{
+    var userRole = ViewData["UserRole"]?.ToString() ?? RoleConstants.CUSTOMER;
     var userName = ViewData["UserName"]?.ToString() ?? "Guest User";
 }
 <!DOCTYPE html>
@@ -18,15 +19,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 @{
-                    var dashboardPage = userRole switch
-                    {
-                        "CUSTOMER" => "/Customer/Dashboard",
-                        "DEALER_STAFF" => "/Dealer/Dashboard",
-                        "DEALER_MANAGER" => "/DealerManager/Dashboard",
-                        "EVM_STAFF" => "/EVM/Dashboard",
-                        "EVM_ADMIN" => "/Admin/Dashboard",
-                        _ => "/Auth/Home"
-                    };
+                    var dashboardPage = RoleConstants.GetDashboardPath(userRole);
                 }
                 <a href="@dashboardPage" class="sidebar-brand" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 0.5rem;">
                     <i class="bi bi-lightning-charge"></i>
@@ -38,22 +31,14 @@
                 <!-- Dashboard link for all users -->
                 <div class="nav-section">
                     @{
-                        var homePage = userRole switch
-                        {
-                            "CUSTOMER" => "/Customer/Dashboard",
-                            "DEALER_STAFF" => "/Dealer/Dashboard",
-                            "DEALER_MANAGER" => "/DealerManager/Dashboard",
-                            "EVM_STAFF" => "/EVM/Dashboard",
-                            "EVM_ADMIN" => "/Admin/Dashboard",
-                            _ => "/Auth/Home"
-                        };
+                        var homePage = RoleConstants.GetDashboardPath(userRole);
                     }
                     <a class="nav-item" href="@homePage">
                         <i class="bi bi-house-door"></i> Trang chủ
                     </a>
                 </div>
                 
-                @if (userRole == "CUSTOMER")
+                @if (userRole == RoleConstants.CUSTOMER)
                 {
                     <div class="nav-section">
                         <a class="nav-item" asp-page="/Customer/Dashboard">
@@ -61,6 +46,9 @@
                         </a>
                         <a class="nav-item" asp-page="/Customer/Vehicles">
                             <i class="bi bi-car-front"></i> Xe điện
+                        </a>
+                        <a class="nav-item" asp-page="/Customer/Compare">
+                            <i class="bi bi-diagram-3"></i> So sánh xe
                         </a>
                         <a class="nav-item" asp-page="/Customer/MyQuotes">
                             <i class="bi bi-file-text"></i> Báo giá của tôi
@@ -73,7 +61,7 @@
                         </a>
                     </div>
                 }
-                else if (userRole == "DEALER_STAFF")
+                else if (userRole == RoleConstants.DEALER_STAFF)
                 {
                     <div class="nav-section">
                         <div class="nav-section-title">Main</div>
@@ -82,6 +70,9 @@
                         </a>
                         <a class="nav-item" asp-page="/Dealer/Vehicles">
                             <i class="bi bi-car-front"></i> Danh mục xe
+                        </a>
+                        <a class="nav-item" asp-page="/Dealer/Compare">
+                            <i class="bi bi-diagram-3"></i> So sánh xe
                         </a>
                     </div>
                     <div class="nav-section">
@@ -109,7 +100,7 @@
                         </a>
                     </div>
                 }
-                else if (userRole == "DEALER_MANAGER")
+                else if (userRole == RoleConstants.DEALER_MANAGER)
                 {
                     <div class="nav-section">
                         <div class="nav-section-title">Main</div>
@@ -136,7 +127,7 @@
                         </a>
                     </div>
                 }
-                else if (userRole == "EVM_STAFF")
+                else if (userRole == RoleConstants.EVM_STAFF)
                 {
                     <div class="nav-section">
                         <div class="nav-section-title">Main</div>
@@ -166,7 +157,7 @@
                         </a>
                     </div>
                 }
-                else if (userRole == "EVM_ADMIN")
+                else if (userRole == RoleConstants.EVM_ADMIN)
                 {
                     <div class="nav-section">
                         <div class="nav-section-title">Main</div>
@@ -194,9 +185,6 @@
                         <a class="nav-item" asp-page="/Admin/Users">
                             <i class="bi bi-people"></i> Người dùng
                         </a>
-                        <a class="nav-item" asp-page="/EVM/Dealers">
-                            <i class="bi bi-shop"></i> Đại lý
-                        </a>
                     </div>
                 }
             </nav>
@@ -222,7 +210,7 @@
                     <h5 class="mb-0">@ViewData["Title"]</h5>
                 </div>
                 <div class="header-right">
-                    @if (userRole == "CUSTOMER")
+                    @if (userRole == RoleConstants.CUSTOMER)
                     {
                         <div style="position: relative; margin-right: 1rem;">
                             <button id="notificationBell" class="btn btn-secondary" style="position: relative; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
@@ -278,7 +266,7 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 
-@if (userRole == "CUSTOMER")
+@if (userRole == RoleConstants.CUSTOMER)
 {
     <script>
         let notificationCount = 0;

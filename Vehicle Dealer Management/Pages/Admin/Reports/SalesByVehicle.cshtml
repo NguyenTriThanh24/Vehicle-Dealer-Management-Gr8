@@ -2,8 +2,6 @@
 @model Vehicle_Dealer_Management.Pages.Admin.Reports.SalesByVehicleModel
 @{
     ViewData["Title"] = "Báo cáo doanh số theo xe";
-    ViewData["UserRole"] = "EVM_ADMIN";
-    ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "Admin";
 }
 
 <div class="content-header">
@@ -37,11 +35,8 @@
         <h3 class="card-title mb-0">Biểu đồ doanh số theo xe</h3>
     </div>
     <div class="card-body">
-        <div class="chart-container">
-            <div class="chart-placeholder">
-                <i class="bi bi-bar-chart-fill" style="font-size: 4rem; opacity: 0.3;"></i>
-                <p>Biểu đồ cột (Chart.js placeholder)</p>
-            </div>
+        <div class="chart-container" style="position: relative; height: 400px;">
+            <canvas id="vehicleRevenueChart"></canvas>
         </div>
     </div>
 </div>
@@ -129,4 +124,89 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Vehicle Revenue Bar Chart
+        @if (Model.VehicleReports.Any())
+        {
+            <text>
+            const vehicleRevenueCtx = document.getElementById('vehicleRevenueChart');
+            const vehicleData = @Html.Raw(Json.Serialize(Model.VehicleReports.Select(v => new { 
+                label = v.ModelName + " " + v.VariantName,
+                revenue = v.Revenue,
+                quantity = v.QuantitySold
+            })));
+            
+            new Chart(vehicleRevenueCtx, {
+                type: 'bar',
+                data: {
+                    labels: vehicleData.map(v => v.label),
+                    datasets: [{
+                        label: 'Doanh thu (VND)',
+                        data: vehicleData.map(v => v.revenue),
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    const dataIndex = context.dataIndex;
+                                    const quantity = vehicleData[dataIndex].quantity;
+                                    return 'Doanh thu: ' + value.toLocaleString('vi-VN') + ' VND (Số lượng: ' + quantity + ' xe)';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('vi-VN') + ' VND';
+                                },
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            </text>
+        }
+        else
+        {
+            <text>
+            const chartContainer = document.getElementById('vehicleRevenueChart');
+            if (chartContainer) {
+                chartContainer.parentElement.innerHTML = 
+                    '<div class="chart-placeholder"><i class="bi bi-bar-chart-fill" style="font-size: 4rem; opacity: 0.3;"></i><p>Chưa có dữ liệu</p></div>';
+            }
+            </text>
+        }
+    </script>
+}
 

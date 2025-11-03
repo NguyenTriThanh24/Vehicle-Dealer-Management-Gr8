@@ -13,17 +13,20 @@ namespace Vehicle_Dealer_Management.Pages.Customer
         private readonly ISalesDocumentService _salesDocumentService;
         private readonly IVehicleService _vehicleService;
         private readonly ITestDriveService _testDriveService;
+        private readonly IPaymentService _paymentService;
 
         public DashboardModel(
             ApplicationDbContext context,
             ISalesDocumentService salesDocumentService,
             IVehicleService vehicleService,
-            ITestDriveService testDriveService)
+            ITestDriveService testDriveService,
+            IPaymentService paymentService)
         {
             _context = context;
             _salesDocumentService = salesDocumentService;
             _vehicleService = vehicleService;
             _testDriveService = testDriveService;
+            _paymentService = paymentService;
         }
 
         public string CustomerName { get; set; } = "";
@@ -65,18 +68,24 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 var testDrives = await _testDriveService.GetTestDrivesByCustomerIdAsync(customerProfile.Id);
                 TestDrivesCount = testDrives.Count();
 
-                // Get recent orders
+                // Get recent orders (already include Payments via GetSalesDocumentsByCustomerIdAsync)
                 var recentOrders = orders
                     .OrderByDescending(s => s.CreatedAt)
                     .Take(5)
                     .ToList();
 
-                RecentOrders = recentOrders.Select(o => new OrderViewModel
+                // Calculate from navigation properties to avoid concurrent DbContext access
+                RecentOrders = recentOrders.Select(o =>
                 {
-                    Id = o.Id,
-                    CreatedAt = o.CreatedAt,
-                    Status = o.Status,
-                    TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0
+                    var totalPaid = o.Payments?.Sum(p => p.Amount) ?? 0;
+                    return new OrderViewModel
+                    {
+                        Id = o.Id,
+                        CreatedAt = o.CreatedAt,
+                        Status = o.Status,
+                        TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0,
+                        TotalPaid = totalPaid
+                    };
                 }).ToList();
             }
 
@@ -92,6 +101,7 @@ namespace Vehicle_Dealer_Management.Pages.Customer
             public DateTime CreatedAt { get; set; }
             public string Status { get; set; } = "";
             public decimal TotalAmount { get; set; }
+            public decimal TotalPaid { get; set; }
         }
     }
 }

@@ -116,12 +116,11 @@ namespace Vehicle_Dealer_Management.Pages.Customer
                 return NotFound();
             }
 
-            // Update status to ACCEPTED
-            quote.Status = "ACCEPTED";
-            quote.UpdatedAt = DateTime.UtcNow;
+            // Update status to ACCEPTED using service
             await _salesDocumentService.UpdateSalesDocumentStatusAsync(id, "ACCEPTED");
 
-            return RedirectToPage("/Customer/MyQuotes");
+            TempData["Success"] = "Báo giá đã được chấp nhận!";
+            return RedirectToPage("/Customer/QuoteDetail", new { id });
         }
 
         public async Task<IActionResult> OnPostRejectAsync(int id)

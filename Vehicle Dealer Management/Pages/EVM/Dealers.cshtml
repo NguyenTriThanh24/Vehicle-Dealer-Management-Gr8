@@ -18,6 +18,20 @@
     </div>
 </div>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success" style="background: var(--success-bg); color: var(--success); border: 1px solid var(--success); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+        <i class="bi bi-check-circle"></i> @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger" style="background: var(--error-bg); color: var(--error); border: 1px solid var(--error); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+    </div>
+}
+
 <!-- Summary Cards -->
 <div class="grid grid-cols-4 mb-4">
     <div class="stat-card">
@@ -84,9 +98,27 @@
                     <a href="/EVM/Dealers/Edit?id=@dealer.Id" class="btn btn-secondary btn-sm" style="flex: 1;">
                         <i class="bi bi-pencil"></i> Sửa
                     </a>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(@dealer.Id, '@dealer.Name')" style="flex: 1;">
+                        <i class="bi bi-trash"></i> Xóa
+                    </button>
                 </div>
             </div>
         </div>
     }
 </div>
+
+<!-- Delete Confirmation Form (hidden) -->
+<form method="post" asp-page-handler="DeleteDealer" id="deleteForm" style="display: none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="dealerId" id="deleteDealerId" />
+</form>
+
+<script>
+    function confirmDelete(dealerId, dealerName) {
+        if (confirm(`Bạn có chắc chắn muốn XÓA HẲN đại lý "${dealerName}"?\n\nHành động này sẽ:\n- Xóa tất cả dữ liệu liên quan (chính sách giá, đơn hàng, lịch lái thử, feedback)\n- Gỡ liên kết với các nhân viên\n- Không thể hoàn tác!`)) {
+            document.getElementById('deleteDealerId').value = dealerId;
+            document.getElementById('deleteForm').submit();
+        }
+    }
+</script>
 
