@@ -53,6 +53,8 @@ builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<IPaymentGatewayService, PaymentGatewayService>();
+builder.Services.AddScoped<AIDataAnalysisService>();
+builder.Services.AddScoped<IAIChatService, AIChatService>();
 
 // Add HttpClient for payment gateway
 builder.Services.AddHttpClient<IPaymentGatewayService, PaymentGatewayService>();

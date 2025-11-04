@@ -368,38 +368,6 @@ namespace Vehicle_Dealer_Management.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Feedbacks",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    DealerId = table.Column<int>(type: "int", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ResolvedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Feedbacks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Feedbacks_CustomerProfiles_CustomerId",
-                        column: x => x.CustomerId,
-                        principalTable: "CustomerProfiles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Feedbacks_Dealers_DealerId",
-                        column: x => x.DealerId,
-                        principalTable: "Dealers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "SalesDocuments",
                 columns: table => new
                 {
@@ -505,6 +473,45 @@ namespace Vehicle_Dealer_Management.Migrations
                         principalTable: "SalesDocuments",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Feedbacks",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CustomerId = table.Column<int>(type: "int", nullable: false),
+                    DealerId = table.Column<int>(type: "int", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Rating = table.Column<int>(type: "int", nullable: true),
+                    OrderId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ResolvedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Feedbacks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Feedbacks_CustomerProfiles_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "CustomerProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Feedbacks_Dealers_DealerId",
+                        column: x => x.DealerId,
+                        principalTable: "Dealers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Feedbacks_SalesDocuments_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "SalesDocuments",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -629,6 +636,21 @@ namespace Vehicle_Dealer_Management.Migrations
                 name: "IX_Feedbacks_DealerId_Status",
                 table: "Feedbacks",
                 columns: new[] { "DealerId", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Feedbacks_DealerId_Type_Rating",
+                table: "Feedbacks",
+                columns: new[] { "DealerId", "Type", "Rating" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Feedbacks_OrderId",
+                table: "Feedbacks",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Feedbacks_Type_OrderId",
+                table: "Feedbacks",
+                columns: new[] { "Type", "OrderId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_UserId",

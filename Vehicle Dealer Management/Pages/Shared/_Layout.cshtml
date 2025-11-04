@@ -267,6 +267,11 @@
         });
     </script>
 
+    @if (userRole == RoleConstants.EVM_ADMIN)
+    {
+        <script src="~/js/ai-chat.js" asp-append-version="true"></script>
+    }
+
     @await RenderSectionAsync("Scripts", required: false)
 
 @if (userRole == RoleConstants.CUSTOMER)
