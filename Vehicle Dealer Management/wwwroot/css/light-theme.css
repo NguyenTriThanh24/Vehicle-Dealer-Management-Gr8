@@ -1111,19 +1111,35 @@ select.form-control {
    ============================================ */
 
 #notificationDropdown {
-    background: #FFFFFF;
-    border: 1px solid var(--border);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: #FFFFFF !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 #notificationDropdown > div:first-child {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--border) !important;
+    background: #F8F9FA !important;
 }
 
 .notification-item {
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle) !important;
+    transition: background 0.2s;
+}
+
+.notification-item:hover {
+    background: #F8F9FA !important;
 }
 
 .notification-item:last-child {
     border-bottom: none;
+}
+
+/* Override any dark theme remnants */
+.notification-item strong {
+    color: var(--text-heading) !important;
+}
+
+.notification-item .text-muted,
+.notification-item div[style*="color: var(--text-muted)"] {
+    color: var(--text-muted) !important;
 }
