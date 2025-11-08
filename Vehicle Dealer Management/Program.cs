@@ -36,6 +36,7 @@ builder.Services.AddScoped<ITestDriveRepository, TestDriveRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
 builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<ICustomerProfileRepository, CustomerProfileRepository>();
 
 // Register Services (BLL Layer)
 builder.Services.AddScoped<IVehicleService, VehicleService>();
