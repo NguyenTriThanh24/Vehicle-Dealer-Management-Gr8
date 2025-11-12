@@ -51,9 +51,9 @@ namespace Vehicle_Dealer_Management.BLL.Services
             }
 
             // Validate method
-            if (method != "CASH" && method != "FINANCE" && method != "MOMO" && method != "VNPAY")
+            if (method != "CASH" && method != "FINANCE" && method != "MOMO" && method != "MOMO_ATM" && method != "VNPAY")
             {
-                throw new ArgumentException("Payment method must be 'CASH', 'FINANCE', 'MOMO', or 'VNPAY'", nameof(method));
+                throw new ArgumentException("Payment method must be 'CASH', 'FINANCE', 'MOMO', 'MOMO_ATM', or 'VNPAY'", nameof(method));
             }
 
             // Validate amount
@@ -71,10 +71,12 @@ namespace Vehicle_Dealer_Management.BLL.Services
                 }
             }
 
+            var normalizedMethod = method == "MOMO_ATM" ? "MOMO_ATM" : method;
+
             var payment = new Payment
             {
                 SalesDocumentId = salesDocumentId,
-                Method = method,
+                Method = normalizedMethod,
                 Amount = amount,
                 MetaJson = metaJson,
                 PaidAt = DateTime.UtcNow
