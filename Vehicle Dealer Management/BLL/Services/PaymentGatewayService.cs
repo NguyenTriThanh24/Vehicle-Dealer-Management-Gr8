@@ -38,7 +38,7 @@ namespace Vehicle_Dealer_Management.BLL.Services
             // Validation cho MoMo sandbox
             const decimal momoWalletMinAmount = 1000m;
             const decimal momoWalletMaxAmount = 50000000m;
-            const decimal momoAtmMinAmount = 1000m;
+            const decimal momoAtmMinAmount = 10000m;
             const decimal momoAtmMaxAmount = 5000000m;
             var sandboxMin = method == MoMoPaymentMethod.ATM ? momoAtmMinAmount : momoWalletMinAmount;
             var sandboxMax = method == MoMoPaymentMethod.ATM ? momoAtmMaxAmount : momoWalletMaxAmount;
@@ -60,9 +60,9 @@ namespace Vehicle_Dealer_Management.BLL.Services
                     {
                         if (testModeScaleDownMethod == "auto")
                         {
-                            // Tự động scale down theo tỷ lệ: lấy phần nghìn của số tiền gốc
-                            // Ví dụ: 2,500,000,000 -> 2500, 1,500,000,000 -> 1500
-                            amount = Math.Floor(originalAmount / 1000000m);
+                            // Tự động scale down: ví MoMo chia 1.000.000, ATM chia 100.000 để giữ số tiền đủ lớn
+                            var divisor = method == MoMoPaymentMethod.ATM ? 100000m : 1000000m;
+                            amount = Math.Floor(originalAmount / divisor);
                             // Đảm bảo nằm trong khoảng min/max sandbox
                             amount = Math.Max(sandboxMin, Math.Min(amount, sandboxMax));
                         }
