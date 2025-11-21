@@ -18,18 +18,7 @@
     </div>
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-check-circle"></i> @TempData["Success"]
-    </div>
-    <script>
-        setTimeout(function() {
-            var toast = document.getElementById('successToast');
-            if (toast) toast.style.display = 'none';
-        }, 5000);
-    </script>
-}
+@await Html.PartialAsync("_ToastNotifications")
 
 <!-- My Test Drives -->
 @if (Model.TestDrives.Any())
@@ -171,12 +160,7 @@ else
                     <label class="form-label">Ghi chú (tùy chọn)</label>
                     <textarea class="form-control" name="note" rows="2" placeholder="Yêu cầu đặc biệt..."></textarea>
                 </div>
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
-                        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
-                    </div>
-                }
+                @await Html.PartialAsync("_InlineAlert", "Error")
                 <div class="flex gap-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check"></i> Đặt lịch
@@ -241,8 +225,9 @@ else
                 </div>
                 @if (TempData["EditError"] != null)
                 {
-                    <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
-                        <i class="bi bi-exclamation-triangle"></i> @TempData["EditError"]
+                    <div class="inline-alert alert-error">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span>@TempData["EditError"]</span>
                     </div>
                 }
                 <div class="flex gap-2">

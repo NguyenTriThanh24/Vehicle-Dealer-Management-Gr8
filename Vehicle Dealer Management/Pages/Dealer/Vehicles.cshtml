@@ -119,7 +119,7 @@
                 const checked = document.querySelectorAll('.vehicle-checkbox:checked');
                 if (checked.length > 4) {
                     checkbox.checked = false;
-                    alert('Chỉ có thể chọn tối đa 4 xe để so sánh');
+                    showToastNotification('Chỉ có thể chọn tối đa 4 xe để so sánh', 'warning', 3000);
                     updateCompareButton();
                     return false;
                 }
@@ -147,7 +147,7 @@
             if (ids && checkboxes.length <= 4) {
                 window.location.href = '/Dealer/Compare?ids=' + ids;
             } else if (checkboxes.length > 4) {
-                alert('Chỉ có thể so sánh tối đa 4 xe');
+                showToastNotification('Chỉ có thể so sánh tối đa 4 xe', 'warning', 3000);
             }
         }
     </script>

@@ -18,19 +18,7 @@
     </div>
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success" style="background: var(--success-bg); color: var(--success); border: 1px solid var(--success); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
-        <i class="bi bi-check-circle"></i> @TempData["Success"]
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger" style="background: var(--error-bg); color: var(--error); border: 1px solid var(--error); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 1rem;">
-        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
-    </div>
-}
+@await Html.PartialAsync("_ToastNotifications")
 
 <!-- Summary Cards -->
 <div class="grid grid-cols-4 mb-4">

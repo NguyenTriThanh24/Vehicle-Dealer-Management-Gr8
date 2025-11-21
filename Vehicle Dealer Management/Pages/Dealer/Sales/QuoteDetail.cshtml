@@ -19,9 +19,9 @@
             </a>
             @if (Model.Quote.Status == "ACCEPTED" && Model.Contract == null)
             {
-                <form method="post" asp-page-handler="CreateContract" style="display: inline;">
+                <form method="post" asp-page-handler="CreateContract" style="display: inline;" id="createContractFormTop">
                     <input type="hidden" name="id" value="@Model.Quote.Id" />
-                    <button type="submit" class="btn btn-outline-primary" onclick="return confirm('Tạo hợp đồng và gửi cho khách hàng ký?');">
+                    <button type="button" class="btn btn-outline-primary" onclick="showConfirmModal('Tạo hợp đồng', 'Tạo hợp đồng và gửi cho khách hàng ký?', function() { document.getElementById('createContractFormTop').submit(); }, 'Xác nhận', 'Hủy', 'info');">
                         <i class="bi bi-file-text"></i> Tạo hợp đồng
                     </button>
                 </form>
@@ -31,9 +31,9 @@
                 var canConvert = Model.Contract != null && (Model.Contract.Status == "SIGNED" || Model.Contract.Status == "ORDER_CREATED");
                 if (canConvert)
                 {
-                    <form method="post" asp-page-handler="ConvertToOrder" style="display: inline;">
+                    <form method="post" asp-page-handler="ConvertToOrder" style="display: inline;" id="convertToOrderFormTop">
                         <input type="hidden" name="id" value="@Model.Quote.Id" />
-                        <button type="submit" class="btn btn-primary" onclick="return confirm('Bạn có chắc chắn muốn chuyển báo giá này thành đơn hàng? Đơn hàng sẽ được tạo với trạng thái OPEN và tất cả thông tin từ báo giá sẽ được sao chép.');">
+                        <button type="button" class="btn btn-primary" onclick="showConfirmModal('Chuyển thành đơn hàng', 'Bạn có chắc chắn muốn chuyển báo giá này thành đơn hàng? Đơn hàng sẽ được tạo với trạng thái OPEN và tất cả thông tin từ báo giá sẽ được sao chép.', function() { document.getElementById('convertToOrderFormTop').submit(); }, 'Xác nhận', 'Hủy', 'warning');">
                             <i class="bi bi-file-earmark-check"></i> Chuyển thành đơn hàng
                         </button>
                     </form>
@@ -204,9 +204,9 @@
                 <div class="grid grid-cols-1 gap-2">
                     @if (Model.Quote.Status == "ACCEPTED" && Model.Contract == null)
                     {
-                        <form method="post" asp-page-handler="CreateContract" style="width: 100%;">
+                        <form method="post" asp-page-handler="CreateContract" style="width: 100%;" id="createContractForm">
                             <input type="hidden" name="id" value="@Model.Quote.Id" />
-                            <button type="submit" class="btn btn-outline-primary" style="width: 100%;" onclick="return confirm('Tạo hợp đồng và gửi cho khách hàng ký?');">
+                            <button type="button" class="btn btn-outline-primary" style="width: 100%;" onclick="showConfirmModal('Tạo hợp đồng', 'Tạo hợp đồng và gửi cho khách hàng ký?', function() { document.getElementById('createContractForm').submit(); }, 'Xác nhận', 'Hủy', 'info');">
                                 <i class="bi bi-file-text"></i> Tạo hợp đồng
                             </button>
                         </form>
@@ -235,9 +235,9 @@
                         var canConvert = Model.Contract != null && (Model.Contract.Status == "SIGNED" || Model.Contract.Status == "ORDER_CREATED");
                         if (canConvert)
                         {
-                            <form method="post" asp-page-handler="ConvertToOrder" style="width: 100%;">
+                            <form method="post" asp-page-handler="ConvertToOrder" style="width: 100%;" id="convertToOrderForm">
                                 <input type="hidden" name="id" value="@Model.Quote.Id" />
-                                <button type="submit" class="btn btn-primary" style="width: 100%;" onclick="return confirm('Bạn có chắc chắn muốn chuyển báo giá này thành đơn hàng? Đơn hàng sẽ được tạo với trạng thái OPEN và tất cả thông tin từ báo giá sẽ được sao chép.');">
+                                <button type="button" class="btn btn-primary" style="width: 100%;" onclick="showConfirmModal('Chuyển thành đơn hàng', 'Bạn có chắc chắn muốn chuyển báo giá này thành đơn hàng? Đơn hàng sẽ được tạo với trạng thái OPEN và tất cả thông tin từ báo giá sẽ được sao chép.', function() { document.getElementById('convertToOrderForm').submit(); }, 'Xác nhận', 'Hủy', 'warning');">
                                     <i class="bi bi-file-earmark-check"></i> Chuyển thành đơn hàng
                                 </button>
                             </form>
@@ -304,31 +304,7 @@
     </div>
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-check-circle"></i> @TempData["Success"]
-    </div>
-    <script>
-        setTimeout(function() {
-            var toast = document.getElementById('successToast');
-            if (toast) toast.style.display = 'none';
-        }, 3000);
-    </script>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div id="errorToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius); color: var(--error); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
-    </div>
-    <script>
-        setTimeout(function() {
-            var toast = document.getElementById('errorToast');
-            if (toast) toast.style.display = 'none';
-        }, 5000);
-    </script>
-}
+@await Html.PartialAsync("_ToastNotifications")
 
 @section Scripts {
     <!-- Scripts for toast notifications -->

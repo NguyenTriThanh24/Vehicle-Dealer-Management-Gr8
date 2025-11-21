@@ -18,31 +18,7 @@
     </div>
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-check-circle"></i> @TempData["Success"]
-    </div>
-    <script>
-        setTimeout(function() {
-            var toast = document.getElementById('successToast');
-            if (toast) toast.style.display = 'none';
-        }, 3000);
-    </script>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div id="errorToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius); color: var(--error); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
-    </div>
-    <script>
-        setTimeout(function() {
-            var toast = document.getElementById('errorToast');
-            if (toast) toast.style.display = 'none';
-        }, 5000);
-    </script>
-}
+@await Html.PartialAsync("_ToastNotifications")
 
 <!-- Summary Cards -->
 <div class="grid grid-cols-4 mb-4">
@@ -59,7 +35,7 @@
     <div class="stat-card">
         <div class="stat-label">Cảnh báo thấp</div>
         <div class="stat-value" style="color: var(--error);">@Model.LowStockCount</div>
-        <div class="text-muted" style="font-size: 0.875rem;">< 10 xe</div>
+        <div class="text-muted" style="font-size: 0.875rem;">&lt; 10 xe</div>
     </div>
     <div class="stat-card">
         <div class="stat-label">Tổng giá trị kho</div>

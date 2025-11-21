@@ -20,15 +20,17 @@
 
 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
 {
-    <div class="alert alert-error">
-        <i class="bi bi-exclamation-circle"></i> @Model.ErrorMessage
+    <div class="inline-alert alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>@Model.ErrorMessage</span>
     </div>
 }
 
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
 {
-    <div class="alert alert-success">
-        <i class="bi bi-check-circle"></i> @Model.SuccessMessage
+    <div class="inline-alert alert-success">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>@Model.SuccessMessage</span>
     </div>
 }
 
@@ -112,8 +114,9 @@
 }
 else
 {
-    <div class="alert alert-error">
-        <i class="bi bi-exclamation-circle"></i> Không tìm thấy thông tin xe.
+    <div class="inline-alert alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Không tìm thấy thông tin xe.</span>
     </div>
 }
 

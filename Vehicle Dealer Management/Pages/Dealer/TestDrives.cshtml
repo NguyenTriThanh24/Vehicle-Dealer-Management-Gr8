@@ -138,14 +138,22 @@
             <h3 class="card-title mb-0">Đặt lịch lái thử mới</h3>
         </div>
         <div class="card-body">
+            @await Html.PartialAsync("_InlineAlert", "Error")
             <form method="post" asp-page-handler="Create">
                 <div class="form-group">
                     <label class="form-label">Khách hàng</label>
                     <select class="form-control" name="customerId" required>
                         <option value="">-- Chọn khách hàng --</option>
-                        @foreach (var c in Model.AllCustomers)
+                        @if (Model.AllCustomers.Any())
                         {
-                            <option value="@c.Id">@c.Name - @c.Phone</option>
+                            @foreach (var c in Model.AllCustomers)
+                            {
+                                <option value="@c.Id">@c.Name - @c.Phone</option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="" disabled>Không có khách hàng nào</option>
                         }
                     </select>
                 </div>
@@ -179,6 +187,21 @@
         </div>
     </div>
 </div>
+
+@await Html.PartialAsync("_ToastNotifications")
+
+@if (TempData["Error"] != null && !string.IsNullOrEmpty(TempData["Error"]?.ToString()))
+{
+    <script>
+        // Open create modal if there's an error (likely from form submission)
+        document.addEventListener('DOMContentLoaded', function() {
+            var createModal = document.getElementById('createModal');
+            if (createModal) {
+                createModal.style.display = 'flex';
+            }
+        });
+    </script>
+}
 
 @section Scripts {
     <style>

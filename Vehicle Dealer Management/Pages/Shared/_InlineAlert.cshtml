@@ -1,0 +1,49 @@
+@* 
+    Inline Alert Component for Forms
+    Usage: @await Html.PartialAsync("_InlineAlert", "Error") or @await Html.PartialAsync("_InlineAlert", "Success")
+    
+    Parameters:
+    - type: "Error", "Success", "Info", "Warning"
+*@
+
+@model string
+
+@{
+    var type = Model ?? "Error";
+    var message = "";
+    var icon = "";
+    var cssClass = "";
+
+    switch (type.ToLower())
+    {
+        case "success":
+            message = TempData["Success"]?.ToString();
+            icon = "bi-check-circle-fill";
+            cssClass = "alert-success";
+            break;
+        case "error":
+            message = TempData["Error"]?.ToString();
+            icon = "bi-exclamation-triangle-fill";
+            cssClass = "alert-error";
+            break;
+        case "info":
+            message = TempData["Info"]?.ToString();
+            icon = "bi-info-circle-fill";
+            cssClass = "alert-info";
+            break;
+        case "warning":
+            message = TempData["Warning"]?.ToString();
+            icon = "bi-exclamation-circle-fill";
+            cssClass = "alert-warning";
+            break;
+    }
+}
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="inline-alert @cssClass">
+        <i class="bi @icon"></i>
+        <span>@message</span>
+    </div>
+}
+

@@ -18,12 +18,7 @@
     </div>
 </div>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-error" style="margin-bottom: 1.5rem; padding: 1rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
-        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
-    </div>
-}
+@await Html.PartialAsync("_InlineAlert", "Error")
 
 <!-- Stats -->
 <div class="grid grid-cols-5 mb-4">

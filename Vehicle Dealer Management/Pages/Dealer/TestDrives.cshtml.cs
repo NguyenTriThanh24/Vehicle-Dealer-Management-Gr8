@@ -10,18 +10,15 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
     public class TestDrivesModel : PageModel
     {
         private readonly ApplicationDbContext _context;
-        private readonly ICustomerService _customerService;
         private readonly IVehicleService _vehicleService;
         private readonly ITestDriveService _testDriveService;
 
         public TestDrivesModel(
             ApplicationDbContext context,
-            ICustomerService customerService,
             IVehicleService vehicleService,
             ITestDriveService testDriveService)
         {
             _context = context;
-            _customerService = customerService;
             _vehicleService = vehicleService;
             _testDriveService = testDriveService;
         }
@@ -38,6 +35,10 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
 
         public async Task<IActionResult> OnGetAsync(string? filter)
         {
+            // Set UserRole from Session
+            ViewData["UserRole"] = HttpContext.Session.GetString("UserRole") ?? "DEALER_STAFF";
+            ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "User";
+
             var dealerId = HttpContext.Session.GetString("DealerId");
             if (string.IsNullOrEmpty(dealerId))
             {
@@ -56,13 +57,15 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 return RedirectToPage("/Auth/Login");
             }
 
-            // Get customers for create form
-            var customers = await _customerService.GetAllCustomersAsync();
-            AllCustomers = customers.Select(c => new CustomerSimple
+            // Get customers for create form - use CustomerProfiles (not Customers)
+            var customerProfiles = await _context.CustomerProfiles
+                .OrderBy(c => c.FullName)
+                .ToListAsync();
+            AllCustomers = customerProfiles.Select(c => new CustomerSimple
             {
                 Id = c.Id,
                 Name = c.FullName,
-                Phone = c.PhoneNumber ?? ""
+                Phone = c.Phone
             }).ToList();
 
             // Get vehicles for create form
@@ -134,27 +137,86 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostCreateAsync(int customerId, int vehicleId, DateTime date, TimeSpan time, string? note)
+        public async Task<IActionResult> OnPostCreateAsync(int customerId, int vehicleId, string date, string time, string? note)
         {
+            // Set UserRole from Session
+            ViewData["UserRole"] = HttpContext.Session.GetString("UserRole") ?? "DEALER_STAFF";
+            ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "User";
+
             var dealerId = HttpContext.Session.GetString("DealerId");
             if (string.IsNullOrEmpty(dealerId))
             {
+                TempData["Error"] = "Không tìm thấy thông tin đại lý. Vui lòng đăng nhập lại.";
                 return RedirectToPage("/Auth/Login");
             }
 
-            var scheduleTime = date.Add(time);
-
-            var testDrive = new Vehicle_Dealer_Management.DAL.Models.TestDrive
+            try
             {
-                CustomerId = customerId,
-                DealerId = int.Parse(dealerId),
-                VehicleId = vehicleId,
-                ScheduleTime = scheduleTime,
-                Status = "CONFIRMED", // Auto confirm if created by staff
-                Note = note
-            };
+                // Validate inputs
+                if (customerId <= 0 || vehicleId <= 0 || string.IsNullOrEmpty(date) || string.IsNullOrEmpty(time))
+                {
+                    TempData["Error"] = "Vui lòng điền đầy đủ thông tin.";
+                    return RedirectToPage();
+                }
 
-            await _testDriveService.CreateTestDriveAsync(testDrive);
+                // Parse date and time
+                if (!DateTime.TryParse(date, out var scheduleDate))
+                {
+                    TempData["Error"] = "Ngày không hợp lệ.";
+                    return RedirectToPage();
+                }
+
+                if (!TimeSpan.TryParse(time, out var scheduleTime))
+                {
+                    TempData["Error"] = "Giờ không hợp lệ.";
+                    return RedirectToPage();
+                }
+
+                var scheduleDateTime = scheduleDate.Date.Add(scheduleTime);
+
+                // Validate schedule time is in the future
+                if (scheduleDateTime < DateTime.Now)
+                {
+                    TempData["Error"] = "Thời gian đặt lịch phải trong tương lai.";
+                    return RedirectToPage();
+                }
+
+                // Validate customer exists
+                var customer = await _context.CustomerProfiles.FindAsync(customerId);
+                if (customer == null)
+                {
+                    TempData["Error"] = "Khách hàng không tồn tại.";
+                    return RedirectToPage();
+                }
+
+                // Validate vehicle exists
+                var vehicle = await _vehicleService.GetVehicleByIdAsync(vehicleId);
+                if (vehicle == null)
+                {
+                    TempData["Error"] = "Mẫu xe không tồn tại.";
+                    return RedirectToPage();
+                }
+
+                var testDrive = new Vehicle_Dealer_Management.DAL.Models.TestDrive
+                {
+                    CustomerId = customerId,
+                    DealerId = int.Parse(dealerId),
+                    VehicleId = vehicleId,
+                    ScheduleTime = scheduleDateTime,
+                    Status = "CONFIRMED", // Auto confirm if created by staff
+                    Note = note,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _testDriveService.CreateTestDriveAsync(testDrive);
+
+                TempData["Success"] = "Đặt lịch lái thử thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Có lỗi xảy ra khi đặt lịch lái thử. Vui lòng thử lại.";
+                System.Diagnostics.Debug.WriteLine($"Error creating test drive: {ex.Message}");
+            }
 
             return RedirectToPage();
         }

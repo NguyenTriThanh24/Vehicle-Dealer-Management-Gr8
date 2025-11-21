@@ -22,8 +22,9 @@
     <div class="card-body">
         @if (!string.IsNullOrEmpty(Model.ErrorMessage))
         {
-            <div class="alert alert-error" style="margin-bottom: 1.5rem;">
-                <i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage
+            <div class="inline-alert alert-error">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span>@Model.ErrorMessage</span>
             </div>
         }
 
@@ -39,7 +40,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Mã đại lý</label>
-                    <input type="text" class="form-control" value="@Model.Dealer.Code" readonly style="background: var(--black); cursor: not-allowed;" />
+                    <input type="text" class="form-control" value="@Model.Dealer.Code" readonly style="background: var(--surface); cursor: not-allowed;" />
                     <small class="form-text">Mã đại lý không thể thay đổi</small>
                 </div>
 

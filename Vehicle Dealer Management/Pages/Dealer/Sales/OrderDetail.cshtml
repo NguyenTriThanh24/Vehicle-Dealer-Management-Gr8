@@ -441,9 +441,9 @@
                                         </div>
                                         @if (isFullyPaid)
                                         {
-                                            <form method="post" asp-page-handler="CompleteDelivery" style="margin: 0;">
+                                            <form method="post" asp-page-handler="CompleteDelivery" style="margin: 0;" id="completeDeliveryForm">
                                                 <input type="hidden" name="id" value="@Model.Order.Id" />
-                                                <button type="submit" class="btn btn-success" onclick="return confirm('Xác nhận hoàn thành giao xe và đóng đơn hàng?')">
+                                                <button type="button" class="btn btn-success" onclick="showConfirmModal('Hoàn thành giao xe', 'Xác nhận hoàn thành giao xe và đóng đơn hàng?', function() { document.getElementById('completeDeliveryForm').submit(); }, 'Xác nhận', 'Hủy', 'success');">
                                                     <i class="bi bi-check-circle"></i> Hoàn thành giao xe
                                                 </button>
                                             </form>
@@ -455,9 +455,9 @@
                                                 <strong>Lưu ý:</strong> Đơn hàng còn thiếu <strong>@remainingAmountForDelivery.ToString("N0") VND</strong>. 
                                                 Bạn chỉ có thể "Hoàn thành giao xe" (không đóng đơn). Đơn hàng sẽ chỉ đóng khi khách hàng thanh toán đủ 100%.
                                             </div>
-                                            <form method="post" asp-page-handler="CompleteDelivery" style="margin: 0;">
+                                            <form method="post" asp-page-handler="CompleteDelivery" style="margin: 0;" id="completeDeliveryFormPartial">
                                                 <input type="hidden" name="id" value="@Model.Order.Id" />
-                                                <button type="submit" class="btn btn-warning" onclick="return confirm('Xác nhận hoàn thành giao xe?\n\nLưu ý: Đơn hàng sẽ KHÔNG đóng vì chưa thanh toán đủ 100%. Khách hàng cần thanh toán đủ để đóng đơn.')">
+                                                <button type="button" class="btn btn-warning" onclick="showConfirmModal('Hoàn thành giao xe', 'Xác nhận hoàn thành giao xe?\n\nLưu ý: Đơn hàng sẽ KHÔNG đóng vì chưa thanh toán đủ 100%. Khách hàng cần thanh toán đủ để đóng đơn.', function() { document.getElementById('completeDeliveryFormPartial').submit(); }, 'Xác nhận', 'Hủy', 'warning');">
                                                     <i class="bi bi-truck"></i> Hoàn thành giao xe (chưa đóng đơn)
                                                 </button>
                                             </form>
@@ -604,17 +604,7 @@
 </div>
 
 
-@if (TempData["Success"] != null)
-{
-    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-check-circle"></i> @TempData["Success"]
-    </div>
-    <script>
-        setTimeout(function() {
-            document.getElementById('successToast').style.display = 'none';
-        }, 3000);
-    </script>
-}
+@await Html.PartialAsync("_ToastNotifications")
 
 @section Scripts {
     <style>

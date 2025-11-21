@@ -476,7 +476,7 @@ a:hover {
     padding: 0.2rem 0.5rem;
 }
 
-/* Gi?m kích th??c content trong table */
+/* Gi?m kï¿½ch th??c content trong table */
 .table td strong {
     font-size: 0.9375rem;
 }
@@ -1142,4 +1142,314 @@ select.form-control {
 .notification-item .text-muted,
 .notification-item div[style*="color: var(--text-muted)"] {
     color: var(--text-muted) !important;
+}
+
+/* ============================================
+   Toast Notifications
+   ============================================ */
+
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    min-width: 300px;
+    max-width: 500px;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    animation: slideInRight 0.3s ease-out;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.toast-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.toast-content i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    opacity: 0.7;
+    transition: opacity 0.2s, background 0.2s;
+    flex-shrink: 0;
+}
+
+.toast-close:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.toast-success {
+    background: var(--success-bg);
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+.toast-error {
+    background: var(--error-bg);
+    border: 1px solid var(--error);
+    color: var(--error);
+}
+
+.toast-info {
+    background: var(--info-bg);
+    border: 1px solid var(--info);
+    color: var(--info);
+}
+
+.toast-warning {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning);
+    color: #664D03;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .toast-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        min-width: auto;
+    }
+}
+
+/* ============================================
+   Inline Alerts (for forms)
+   ============================================ */
+
+.inline-alert {
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.inline-alert i {
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.inline-alert-success {
+    background: var(--success-bg);
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+.inline-alert-error {
+    background: var(--error-bg);
+    border: 1px solid var(--error);
+    color: var(--error);
+}
+
+.inline-alert-info {
+    background: var(--info-bg);
+    border: 1px solid var(--info);
+    color: var(--info);
+}
+
+.inline-alert-warning {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning);
+    color: #664D03;
+}
+
+/* ============================================
+   Confirmation Modal
+   ============================================ */
+
+.confirm-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.confirm-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.confirm-modal-content {
+    position: relative;
+    background: #FFFFFF;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease-out;
+    z-index: 10001;
+}
+
+.confirm-modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+}
+
+.confirm-modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    margin: 0;
+}
+
+.confirm-modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    width: 32px;
+    height: 32px;
+}
+
+.confirm-modal-close:hover {
+    background: var(--border-subtle);
+    color: var(--text);
+}
+
+.confirm-modal-body {
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+}
+
+.confirm-modal-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+.confirm-modal-message {
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin: 0;
+    white-space: pre-line;
+}
+
+.confirm-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    background: var(--surface);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .confirm-modal-content {
+        width: 95%;
+        max-width: none;
+    }
+    
+    .confirm-modal-body {
+        padding: 1.5rem 1rem;
+    }
+    
+    .confirm-modal-icon {
+        font-size: 2.5rem;
+    }
+    
+    .confirm-modal-footer {
+        flex-direction: column-reverse;
+    }
+    
+    .confirm-modal-footer .btn {
+        width: 100%;
+    }
 }

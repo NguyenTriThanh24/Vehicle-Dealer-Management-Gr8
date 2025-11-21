@@ -158,15 +158,17 @@
                 </div>
                 <div class="card-body">
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <form method="post" asp-page-handler="Accept" style="margin: 0;">
+                        <form method="post" asp-page-handler="Accept" style="margin: 0;" id="acceptForm">
                             <input type="hidden" name="id" value="@Model.Quote.Id" />
-                            <button type="submit" class="btn btn-success" style="width: 100%;" onclick="return confirm('Bạn có chắc chắn muốn chấp nhận báo giá này?');">
+                            <button type="button" class="btn btn-success" style="width: 100%;" 
+                                    onclick="showConfirmModal('Chấp nhận báo giá', 'Bạn có chắc chắn muốn chấp nhận báo giá này?', function() { document.getElementById('acceptForm').submit(); }, 'Chấp nhận', 'Hủy', 'success');">
                                 <i class="bi bi-check-circle"></i> Chấp nhận báo giá
                             </button>
                         </form>
-                        <form method="post" asp-page-handler="Reject" style="margin: 0;">
+                        <form method="post" asp-page-handler="Reject" style="margin: 0;" id="rejectForm">
                             <input type="hidden" name="id" value="@Model.Quote.Id" />
-                            <button type="submit" class="btn btn-secondary" style="width: 100%;" onclick="return confirm('Bạn có chắc chắn muốn từ chối báo giá này?');">
+                            <button type="button" class="btn btn-secondary" style="width: 100%;" 
+                                    onclick="showConfirmModal('Từ chối báo giá', 'Bạn có chắc chắn muốn từ chối báo giá này?', function() { document.getElementById('rejectForm').submit(); }, 'Từ chối', 'Hủy', 'warning');">
                                 <i class="bi bi-x-circle"></i> Từ chối báo giá
                             </button>
                         </form>
@@ -245,4 +247,6 @@
         }
     </div>
 </div>
+
+@await Html.PartialAsync("_ToastNotifications")
 

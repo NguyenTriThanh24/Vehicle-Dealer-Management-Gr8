@@ -1,0 +1,99 @@
+@* 
+    Toast Notifications Component
+    Usage: @await Html.PartialAsync("_ToastNotifications")
+    
+    Supports:
+    - TempData["Success"] - Green success toast
+    - TempData["Error"] - Red error toast  
+    - TempData["Info"] - Blue info toast
+    - TempData["Warning"] - Yellow warning toast
+*@
+
+@if (TempData["Success"] != null)
+{
+    <div class="toast-notification toast-success" id="toastSuccess">
+        <div class="toast-content">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+        <button class="toast-close" onclick="closeToast('toastSuccess')">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+    <script>
+        showToast('toastSuccess', 3000);
+    </script>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="toast-notification toast-error" id="toastError">
+        <div class="toast-content">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>@TempData["Error"]</span>
+        </div>
+        <button class="toast-close" onclick="closeToast('toastError')">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+    <script>
+        showToast('toastError', 5000);
+    </script>
+}
+
+@if (TempData["Info"] != null)
+{
+    <div class="toast-notification toast-info" id="toastInfo">
+        <div class="toast-content">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>@TempData["Info"]</span>
+        </div>
+        <button class="toast-close" onclick="closeToast('toastInfo')">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+    <script>
+        showToast('toastInfo', 4000);
+    </script>
+}
+
+@if (TempData["Warning"] != null)
+{
+    <div class="toast-notification toast-warning" id="toastWarning">
+        <div class="toast-content">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span>@TempData["Warning"]</span>
+        </div>
+        <button class="toast-close" onclick="closeToast('toastWarning')">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+    <script>
+        showToast('toastWarning', 4000);
+    </script>
+}
+
+<script>
+    function showToast(toastId, duration) {
+        var toast = document.getElementById(toastId);
+        if (toast) {
+            toast.style.display = 'flex';
+            toast.style.animation = 'slideInRight 0.3s ease-out';
+            
+            setTimeout(function() {
+                closeToast(toastId);
+            }, duration);
+        }
+    }
+
+    function closeToast(toastId) {
+        var toast = document.getElementById(toastId);
+        if (toast) {
+            toast.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(function() {
+                toast.style.display = 'none';
+            }, 300);
+        }
+    }
+</script>
+

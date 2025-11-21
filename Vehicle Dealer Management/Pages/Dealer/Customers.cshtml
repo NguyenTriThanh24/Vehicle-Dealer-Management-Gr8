@@ -175,6 +175,7 @@
             <h3 class="card-title mb-0">Thêm khách hàng mới</h3>
         </div>
         <div class="card-body">
+            @await Html.PartialAsync("_InlineAlert", "Error")
             <form method="post">
                 <div class="form-group">
                     <label class="form-label">Họ và tên</label>
@@ -186,7 +187,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email" required />
+                    <input type="email" class="form-control" name="email" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">Địa chỉ</label>
@@ -216,12 +217,7 @@
             <h3 class="card-title mb-0">Chỉnh sửa khách hàng</h3>
         </div>
         <div class="card-body">
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-error" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--error-bg); border: 1px solid var(--error); border-radius: var(--radius-sm); color: var(--error);">
-                    <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
-                </div>
-            }
+            @await Html.PartialAsync("_InlineAlert", "Error")
             <form method="post" asp-page-handler="UpdateCustomer">
                 <input type="hidden" id="editCustomerId" name="customerId" />
                 <div class="form-group">
@@ -257,16 +253,18 @@
     </div>
 </div>
 
-@if (TempData["Success"] != null)
+@await Html.PartialAsync("_ToastNotifications")
+
+@if (TempData["Error"] != null && !string.IsNullOrEmpty(TempData["Error"]?.ToString()))
 {
-    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-check-circle"></i> @TempData["Success"]
-    </div>
     <script>
-        setTimeout(function() {
-            var toast = document.getElementById('successToast');
-            if (toast) toast.style.display = 'none';
-        }, 3000);
+        // Open create modal if there's an error (likely from form submission)
+        document.addEventListener('DOMContentLoaded', function() {
+            var createModal = document.getElementById('createModal');
+            if (createModal) {
+                createModal.style.display = 'flex';
+            }
+        });
     </script>
 }
 

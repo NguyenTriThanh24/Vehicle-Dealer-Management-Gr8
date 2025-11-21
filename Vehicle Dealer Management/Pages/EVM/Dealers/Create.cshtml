@@ -105,16 +105,5 @@
     </div>
 </form>
 
-@if (TempData["Success"] != null)
-{
-    <div id="successToast" style="position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 1rem 1.5rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius); color: var(--success); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-        <i class="bi bi-check-circle"></i> @TempData["Success"]
-    </div>
-    <script>
-        setTimeout(function() {
-            var toast = document.getElementById('successToast');
-            if (toast) toast.style.display = 'none';
-        }, 3000);
-    </script>
-}
+@await Html.PartialAsync("_ToastNotifications")
 

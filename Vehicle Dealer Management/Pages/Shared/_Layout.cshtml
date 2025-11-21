@@ -253,6 +253,9 @@
         </div>
     </div>
 
+    <!-- Global Confirmation Modal -->
+    @await Html.PartialAsync("_ConfirmModal")
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -268,6 +271,72 @@
                 item.classList.add('active');
             }
         });
+
+        // Global function to show toast notification from JavaScript
+        function showToastNotification(message, type = 'info', duration = 4000) {
+            const toastContainer = document.getElementById('toastContainer') || createToastContainer();
+            const toastId = 'toast_' + Date.now();
+            const iconClass = {
+                'success': 'bi-check-circle-fill',
+                'error': 'bi-exclamation-triangle-fill',
+                'warning': 'bi-exclamation-circle-fill',
+                'info': 'bi-info-circle-fill'
+            }[type] || 'bi-info-circle-fill';
+
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = 'toast-notification toast-' + type;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="bi ${iconClass}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="toast-close" onclick="closeToast('${toastId}')">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            showToast(toastId, duration);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.style.position = 'fixed';
+            container.style.top = '20px';
+            container.style.right = '20px';
+            container.style.zIndex = '10000';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '0.75rem';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        function showToast(toastId, duration) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.style.display = 'flex';
+                toast.style.animation = 'slideInRight 0.3s ease-out';
+                
+                setTimeout(function() {
+                    closeToast(toastId);
+                }, duration);
+            }
+        }
+
+        function closeToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(function() {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
     </script>
 
     @if (userRole == RoleConstants.EVM_ADMIN)

@@ -20,12 +20,7 @@
     </div>
 </div>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-error mb-4">
-        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
-    </div>
-}
+@await Html.PartialAsync("_InlineAlert", "Error")
 
 <div class="grid grid-cols-2 gap-4">
     <!-- Left: Order Summary -->

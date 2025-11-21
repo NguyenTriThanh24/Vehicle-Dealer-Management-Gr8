@@ -1,0 +1,118 @@
+@* 
+    Confirmation Modal Component
+    Usage: 
+    - Add data attributes to button: data-confirm="true" data-confirm-message="Your message" data-confirm-title="Title"
+    - Or use JavaScript: showConfirmModal('Title', 'Message', callbackFunction)
+*@
+
+<div id="confirmModal" class="confirm-modal" style="display: none;">
+    <div class="confirm-modal-overlay" onclick="closeConfirmModal()"></div>
+    <div class="confirm-modal-content">
+        <div class="confirm-modal-header">
+            <h3 class="confirm-modal-title" id="confirmModalTitle">Xác nhận</h3>
+            <button class="confirm-modal-close" onclick="closeConfirmModal()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+        <div class="confirm-modal-body">
+            <div class="confirm-modal-icon">
+                <i class="bi bi-question-circle-fill"></i>
+            </div>
+            <p class="confirm-modal-message" id="confirmModalMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+        </div>
+        <div class="confirm-modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">
+                <i class="bi bi-x-circle"></i> Hủy
+            </button>
+            <button type="button" class="btn btn-primary" id="confirmModalOk">
+                <i class="bi bi-check-circle"></i> Xác nhận
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let confirmCallback = null;
+
+    function showConfirmModal(title, message, callback, okText = 'Xác nhận', cancelText = 'Hủy', type = 'info') {
+        const modal = document.getElementById('confirmModal');
+        const titleEl = document.getElementById('confirmModalTitle');
+        const messageEl = document.getElementById('confirmModalMessage');
+        const okBtn = document.getElementById('confirmModalOk');
+        const iconEl = modal.querySelector('.confirm-modal-icon i');
+        
+        titleEl.textContent = title || 'Xác nhận';
+        messageEl.textContent = message || 'Bạn có chắc chắn muốn thực hiện hành động này?';
+        okBtn.innerHTML = `<i class="bi bi-check-circle"></i> ${okText}`;
+        const cancelBtn = modal.querySelector('.confirm-modal-footer .btn-secondary');
+        if (cancelBtn) {
+            cancelBtn.innerHTML = `<i class="bi bi-x-circle"></i> ${cancelText}`;
+        }
+        
+        // Set icon based on type
+        iconEl.className = 'bi ';
+        switch(type) {
+            case 'danger':
+                iconEl.className += 'bi-exclamation-triangle-fill';
+                iconEl.style.color = 'var(--error)';
+                okBtn.className = 'btn btn-danger';
+                break;
+            case 'warning':
+                iconEl.className += 'bi-exclamation-circle-fill';
+                iconEl.style.color = 'var(--warning)';
+                okBtn.className = 'btn btn-warning';
+                break;
+            case 'success':
+                iconEl.className += 'bi-check-circle-fill';
+                iconEl.style.color = 'var(--success)';
+                okBtn.className = 'btn btn-success';
+                break;
+            default:
+                iconEl.className += 'bi-question-circle-fill';
+                iconEl.style.color = 'var(--info)';
+                okBtn.className = 'btn btn-primary';
+        }
+        
+        confirmCallback = callback;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        confirmCallback = null;
+    }
+
+    document.getElementById('confirmModalOk').addEventListener('click', function() {
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        closeConfirmModal();
+    });
+
+    // Auto-bind confirm to buttons with data-confirm attribute
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-confirm="true"]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const message = this.getAttribute('data-confirm-message') || 'Bạn có chắc chắn muốn thực hiện hành động này?';
+                const title = this.getAttribute('data-confirm-title') || 'Xác nhận';
+                const type = this.getAttribute('data-confirm-type') || 'info';
+                const form = this.closest('form');
+                
+                showConfirmModal(title, message, function() {
+                    if (form) {
+                        form.submit();
+                    } else if (this.onclick) {
+                        this.onclick();
+                    }
+                }.bind(this), 'Xác nhận', 'Hủy', type);
+            });
+        });
+    });
+</script>
+

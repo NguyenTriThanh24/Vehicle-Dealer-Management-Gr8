@@ -125,37 +125,66 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             ViewData["UserRole"] = HttpContext.Session.GetString("UserRole") ?? "DEALER_STAFF";
             ViewData["UserName"] = HttpContext.Session.GetString("UserName") ?? "User";
 
-            var customer = new CustomerProfile
+            try
             {
-                FullName = fullName,
-                Phone = phone,
-                Email = email,
-                Address = address ?? "",
-                IdentityNo = identityNo,
-                CreatedDate = DateTime.UtcNow
-            };
+                // Normalize email - convert empty string to null
+                string? normalizedEmail = string.IsNullOrWhiteSpace(email) ? null : email.Trim();
 
-            // Validate phone/email unique
-            var existingPhone = await _context.CustomerProfiles
-                .FirstOrDefaultAsync(c => c.Phone == phone && c.Id != 0);
-            if (existingPhone != null)
+                // Validate phone/email unique
+                var existingPhone = await _context.CustomerProfiles
+                    .FirstOrDefaultAsync(c => c.Phone == phone);
+                if (existingPhone != null)
+                {
+                    TempData["Error"] = "Số điện thoại đã được sử dụng.";
+                    return RedirectToPage();
+                }
+
+                if (!string.IsNullOrEmpty(normalizedEmail))
+                {
+                    var existingEmail = await _context.CustomerProfiles
+                        .FirstOrDefaultAsync(c => c.Email != null && c.Email == normalizedEmail);
+                    if (existingEmail != null)
+                    {
+                        TempData["Error"] = "Email đã được sử dụng.";
+                        return RedirectToPage();
+                    }
+                }
+
+                var customer = new CustomerProfile
+                {
+                    FullName = fullName?.Trim() ?? "",
+                    Phone = phone?.Trim() ?? "",
+                    Email = normalizedEmail,
+                    Address = address?.Trim() ?? "",
+                    IdentityNo = string.IsNullOrWhiteSpace(identityNo) ? null : identityNo.Trim(),
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                _context.CustomerProfiles.Add(customer);
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "Thêm khách hàng thành công!";
+            }
+            catch (DbUpdateException ex)
             {
-                TempData["Error"] = "Số điện thoại đã được sử dụng.";
-                return RedirectToPage();
+                // Handle unique constraint violations
+                if (ex.InnerException?.Message.Contains("UNIQUE") == true || 
+                    ex.InnerException?.Message.Contains("duplicate") == true)
+                {
+                    TempData["Error"] = "Số điện thoại hoặc email đã được sử dụng bởi khách hàng khác.";
+                }
+                else
+                {
+                    TempData["Error"] = "Có lỗi xảy ra khi lưu thông tin khách hàng. Vui lòng thử lại.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Có lỗi xảy ra khi thêm khách hàng. Vui lòng thử lại.";
+                // Log exception for debugging
+                System.Diagnostics.Debug.WriteLine($"Error creating customer: {ex.Message}");
             }
 
-            var existingEmail = await _context.CustomerProfiles
-                .FirstOrDefaultAsync(c => !string.IsNullOrEmpty(c.Email) && c.Email == email && c.Id != 0);
-            if (existingEmail != null)
-            {
-                TempData["Error"] = "Email đã được sử dụng.";
-                return RedirectToPage();
-            }
-
-            _context.CustomerProfiles.Add(customer);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Thêm khách hàng thành công!";
             return RedirectToPage();
         }
 
