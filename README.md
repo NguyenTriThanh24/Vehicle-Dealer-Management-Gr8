@@ -2,12 +2,6 @@
 
 > EVM Dealer Portal - Hệ thống quản lý đại lý xe điện
 
-## 📚 Tài liệu
-
-- **[ROADMAP.md](ROADMAP.md)** - 📖 **Tài liệu tổng hợp duy nhất** (Requirements + Database + Roadmap + Progress + Guidelines)
-- **[requirements.md](requirements.md)** - Yêu cầu chức năng chi tiết (tham khảo)
-- **[database.md](database.md)** - Thiết kế database chi tiết (tham khảo)
-
 ## 🚀 Quick Start
 
 ### 1. Migration & Database
