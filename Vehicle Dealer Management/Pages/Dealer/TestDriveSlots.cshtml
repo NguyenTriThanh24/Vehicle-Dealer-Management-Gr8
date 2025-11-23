@@ -147,26 +147,35 @@
                                                 <td>@await Html.PartialAsync("_StatusBadge", booking.Status)</td>
                                                 <td class="text-muted" style="font-size: 0.875rem;">@booking.Note</td>
                                                 <td>
-                                                    @if (booking.Status == "REQUESTED")
-                                                    {
-                                                        <form method="post" asp-page-handler="ConfirmBooking" style="display: inline;">
-                                                            <input type="hidden" name="bookingId" value="@booking.Id" />
-                                                            <input type="hidden" name="returnDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                                                            <button type="submit" class="btn btn-success btn-sm">
-                                                                <i class="bi bi-check"></i> Xác nh?n
-                                                            </button>
-                                                        </form>
-                                                    }
-                                                    @if (booking.Status == "CONFIRMED")
-                                                    {
-                                                        <form method="post" asp-page-handler="MarkDone" style="display: inline;">
-                                                            <input type="hidden" name="bookingId" value="@booking.Id" />
-                                                            <input type="hidden" name="returnDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                                                            <button type="submit" class="btn btn-primary btn-sm">
-                                                                <i class="bi bi-check-circle"></i> Hoàn thành
-                                                            </button>
-                                                        </form>
-                                                    }
+                                                    <div class="flex gap-2">
+                                                        @if (booking.Status == "REQUESTED")
+                                                        {
+                                                            <form method="post" asp-page-handler="ConfirmBooking" style="display: inline;">
+                                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                                <input type="hidden" name="returnDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                                                                <button type="submit" class="btn btn-success btn-sm">
+                                                                    <i class="bi bi-check"></i> Xác nh?n
+                                                                </button>
+                                                            </form>
+                                                            <form method="post" asp-page-handler="RejectBooking" style="display: inline;">
+                                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                                <input type="hidden" name="returnDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                                    <i class="bi bi-x"></i> T? ch?i
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                        @if (booking.Status == "CONFIRMED")
+                                                        {
+                                                            <form method="post" asp-page-handler="MarkDone" style="display: inline;">
+                                                                <input type="hidden" name="bookingId" value="@booking.Id" />
+                                                                <input type="hidden" name="returnDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                                                                <button type="submit" class="btn btn-primary btn-sm">
+                                                                    <i class="bi bi-check-circle"></i> Hoàn thành
+                                                                </button>
+                                                            </form>
+                                                        }
+                                                    </div>
                                                 </td>
                                             </tr>
                                         }

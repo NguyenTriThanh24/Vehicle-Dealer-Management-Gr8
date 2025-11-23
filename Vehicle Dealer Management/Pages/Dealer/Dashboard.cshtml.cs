@@ -11,18 +11,15 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
         private readonly ApplicationDbContext _context;
         private readonly ISalesDocumentService _salesDocumentService;
         private readonly ICustomerService _customerService;
-        private readonly ITestDriveService _testDriveService;
 
         public DashboardModel(
             ApplicationDbContext context,
             ISalesDocumentService salesDocumentService,
-            ICustomerService customerService,
-            ITestDriveService testDriveService)
+            ICustomerService customerService)
         {
             _context = context;
             _salesDocumentService = salesDocumentService;
             _customerService = customerService;
-            _testDriveService = testDriveService;
         }
 
         public string UserName { get; set; } = "";
@@ -35,7 +32,6 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
         public int TotalCustomers { get; set; }
 
         public List<OrderViewModel> RecentOrders { get; set; } = new();
-        public List<TestDriveViewModel> TodayTestDrives { get; set; } = new();
         public List<QuoteViewModel> PendingQuotesList { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync()
@@ -83,7 +79,6 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 .Take(5)
                 .ToList();
 
-            // Customer is already included in the query from SalesDocumentRepository
             RecentOrders = recentOrders.Select(o => new OrderViewModel
             {
                 Id = o.Id,
@@ -93,27 +88,7 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
                 TotalAmount = o.Lines?.Sum(l => l.UnitPrice * l.Qty - l.DiscountValue) ?? 0
             }).ToList();
 
-            // Get test drives for today and upcoming (not completed/cancelled)
-            // Use local date since ScheduleTime is stored as local time for appointments
-            var today = DateTime.Today;
-            var allTestDrives = await _testDriveService.GetTestDrivesByDealerIdAsync(dealerIdInt);
-            var activeTestDrives = allTestDrives
-                .Where(t => t.ScheduleTime.Date >= today && 
-                           (t.Status == "REQUESTED" || t.Status == "CONFIRMED"))
-                .OrderBy(t => t.ScheduleTime)
-                .Take(5)
-                .ToList();
-
-            TodayTestDrives = activeTestDrives.Select(t => new TestDriveViewModel
-            {
-                CustomerName = t.Customer?.FullName ?? "N/A",
-                VehicleName = $"{t.Vehicle?.ModelName} {t.Vehicle?.VariantName}",
-                Time = t.ScheduleTime.ToString("dd/MM HH:mm"),
-                Status = t.Status
-            }).ToList();
-
-            // Get pending quotes (all quotes that need attention, excluding REJECTED and CONVERTED)
-            // Customer is already included in the query from SalesDocumentRepository
+            // Get pending quotes
             var pendingQuotes = allQuotes
                 .Where(q => q.Status != "REJECTED" && q.Status != "CONVERTED")
                 .OrderByDescending(s => s.CreatedAt)
@@ -142,14 +117,6 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             public DateTime CreatedAt { get; set; }
             public string Status { get; set; } = "";
             public decimal TotalAmount { get; set; }
-        }
-
-        public class TestDriveViewModel
-        {
-            public string CustomerName { get; set; } = "";
-            public string VehicleName { get; set; } = "";
-            public string Time { get; set; } = "";
-            public string Status { get; set; } = "";
         }
 
         public class QuoteViewModel

@@ -234,6 +234,21 @@ namespace Vehicle_Dealer_Management.Pages.Dealer
             return RedirectToPage(new { date = returnDate });
         }
 
+        public async Task<IActionResult> OnPostRejectBookingAsync(int bookingId, string? returnDate)
+        {
+            try
+            {
+                await _testDriveService.UpdateTestDriveStatusAsync(bookingId, "CANCELLED");
+                TempData["Success"] = "?ã t? ch?i booking.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Có l?i x?y ra: {ex.Message}";
+            }
+
+            return RedirectToPage(new { date = returnDate });
+        }
+
         public async Task<IActionResult> OnPostMarkDoneAsync(int bookingId, string? returnDate)
         {
             try
